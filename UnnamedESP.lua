@@ -6,9 +6,13 @@ local GUIService		= game:GetService'GuiService';
 local RunService		= game:GetService'RunService';
 local Players			= game:GetService'Players';
 local LocalPlayer		= Players.LocalPlayer;
-local Camera			= workspace.CurrentCamera
-local Mouse				= LocalPlayer:GetMouse();
-local Menu				= {};
+local Camera			= workspace.CurrentCamera;
+local Mouse			= LocalPlayer:GetMouse();
+local V2New			= Vector2.new;
+local V3New			= Vector3.new;
+local WTVP			= Camera.WorldToViewportPoint;
+local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
+local Menu			= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
 local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
@@ -20,28 +24,18 @@ local UIButtons			= {};
 local Sliders			= {};
 local Dragging			= false;
 local DraggingUI		= false;
-local DragOffset		= Vector2.new();
+local DragOffset		= V2New();
 local DraggingWhat		= nil;
 local OldData			= {};
 local IgnoreList		= {};
-local Red				= Color3.new(1, 0, 0);
-local Green				= Color3.new(0, 1, 0);
+local Red			= Color3.new(1, 0, 0);
+local Green			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
 
--- local _pc = pcall;
--- local pcall = ErrorLogging and function(f, ...)
--- 	local ret, err = _pc(f, ...);
+if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
--- 	if not ret then
--- 		warn(ret, err);
--- 		warn(debug.traceback());
--- 	end
-
--- 	return ret, err;
--- end or _pc;
-
-shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
+shared.MenuDrawingData		= shared.MenuDrawingData or { Instances = {} };
 shared.InstanceData		= shared.InstanceData or {};
 shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
@@ -269,6 +263,7 @@ end
 
 function GetTableData(t) -- basically table.foreach i dont even know why i made this
 	if typeof(t) ~= 'table' then return end
+
 	return setmetatable(t, {
 		__call = function(t, func)
 			if typeof(func) ~= 'function' then return end;
@@ -296,9 +291,6 @@ function NewDrawing(InstanceName)
 end
 
 function Menu:AddMenuInstance(Name, DrawingType, Properties)
-	-- if shared.MenuDrawingData.Instances[Name] ~= nil then
-	-- 	shared.MenuDrawingData.Instances[Name]:Remove();
-	-- end
 	local Instance;
 
 	if shared.MenuDrawingData.Instances[Name] ~= nil then
@@ -334,7 +326,7 @@ local Options = setmetatable({}, {
 	__call = function(t, ...)
 		local Arguments = {...};
 		local Name = Arguments[1];
-		OIndex = OIndex + 1; -- (typeof(Arguments[3]) == 'boolean' and 1 or 0);
+		OIndex = OIndex + 1;
 		rawset(t, Name, setmetatable({
 			Name			= Arguments[1];
 			Text			= Arguments[2];
@@ -359,7 +351,7 @@ local Options = setmetatable({}, {
 					end
 					t.Value = BindedKey;
 					BT.Text = tostring(t.Value):match'%w+%.%w+%.(.+)';
-					BT.Position = t.BasePosition + Vector2.new(t.BaseSize.X - BT.TextBounds.X - 20, -10);
+					BT.Position = t.BasePosition + V2New(t.BaseSize.X - BT.TextBounds.X - 20, -10);
 				else
 					local NewValue = v;
 					if NewValue == nil then NewValue = not t.Value; end
@@ -370,7 +362,7 @@ local Options = setmetatable({}, {
 							local AMT = Menu:GetInstance(Format('%s_AmountText', t.Name));
 							if AMT then
 								AMT.Text = tostring(t.Value);
-								AMT.Position = t.BasePosition + Vector2.new(t.BaseSize.X - AMT.TextBounds.X - 10, -10);
+								AMT.Position = t.BasePosition + V2New(t.BaseSize.X - AMT.TextBounds.X - 10, -10);
 							end
 						else
 							local Inner = Menu:GetInstance(Format('%s_InnerCircle', t.Name));
@@ -415,6 +407,7 @@ Options('Rainbow', 'Rainbow Mode', false);
 Options('TextSize', 'Text Size', syn and 18 or 14, 10, 24); -- cuz synapse fonts look weird???
 Options('MaxDistance', 'Max Distance', 2500, 100, 25000);
 Options('RefreshRate', 'Refresh Rate (ms)', 5, 1, 200);
+-- Options('RefreshRate', 'Refresh Rate (ms)', 1, 1, #Drawing.Fonts);
 Options('MenuKey', 'Menu Key', Enum.KeyCode.F4, 1);
 Options('ToggleKey', 'Toggle Key', Enum.KeyCode.F3, 1);
 Options('ResetSettings', 'Reset Settings', function()
@@ -427,8 +420,7 @@ end, 4);
 Options('LoadSettings', 'Load Settings', Load, 3);
 Options('SaveSettings', 'Save Settings', function()
 	writefile(OptionsFile, HttpService:JSONEncode(Options));
-end, 2)
--- Options.SaveSettings.Value();
+end, 2);
 
 Load();
 
@@ -469,10 +461,10 @@ function LineBox:Create(Properties)
 	function Box:Update(CF, Size, Color, Properties)
 		if not CF or not Size then return end
 
-		local TLPos, Visible1	= Camera:WorldToViewportPoint((CF * CFrame.new( Size.X,  Size.Y, 0)).p);
-		local TRPos, Visible2	= Camera:WorldToViewportPoint((CF * CFrame.new(-Size.X,  Size.Y, 0)).p);
-		local BLPos, Visible3	= Camera:WorldToViewportPoint((CF * CFrame.new( Size.X, -Size.Y, 0)).p);
-		local BRPos, Visible4	= Camera:WorldToViewportPoint((CF * CFrame.new(-Size.X, -Size.Y, 0)).p);
+		local TLPos, Visible1	= WorldToViewport((CF * CFrame.new( Size.X,  Size.Y, 0)).p);
+		local TRPos, Visible2	= WorldToViewport((CF * CFrame.new(-Size.X,  Size.Y, 0)).p);
+		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).p);
+		local BRPos, Visible4	= WorldToViewport((CF * CFrame.new(-Size.X, -Size.Y, 0)).p);
 
 		Visible1 = TLPos.Z > 0 -- (commented | reason: random flashes);
 		Visible2 = TRPos.Z > 0 -- (commented | reason: random flashes);
@@ -483,37 +475,37 @@ function LineBox:Create(Properties)
 		if Visible1 then
 			Box['TopLeft'].Visible		= true;
 			Box['TopLeft'].Color		= Color;
-			Box['TopLeft'].From			= Vector2.new(TLPos.X, TLPos.Y);
-			Box['TopLeft'].To			= Vector2.new(TRPos.X, TRPos.Y);
+			Box['TopLeft'].From			= V2New(TLPos.X, TLPos.Y);
+			Box['TopLeft'].To			= V2New(TRPos.X, TRPos.Y);
 		else
 			Box['TopLeft'].Visible		= false;
 		end
 		if Visible2 then
 			Box['TopRight'].Visible		= true;
 			Box['TopRight'].Color		= Color;
-			Box['TopRight'].From		= Vector2.new(TRPos.X, TRPos.Y);
-			Box['TopRight'].To			= Vector2.new(BRPos.X, BRPos.Y);
+			Box['TopRight'].From		= V2New(TRPos.X, TRPos.Y);
+			Box['TopRight'].To			= V2New(BRPos.X, BRPos.Y);
 		else
 			Box['TopRight'].Visible		= false;
 		end
 		if Visible3 then
 			Box['BottomLeft'].Visible	= true;
 			Box['BottomLeft'].Color		= Color;
-			Box['BottomLeft'].From		= Vector2.new(BLPos.X, BLPos.Y);
-			Box['BottomLeft'].To		= Vector2.new(TLPos.X, TLPos.Y);
+			Box['BottomLeft'].From		= V2New(BLPos.X, BLPos.Y);
+			Box['BottomLeft'].To		= V2New(TLPos.X, TLPos.Y);
 		else
 			Box['BottomLeft'].Visible	= false;
 		end
 		if Visible4 then
 			Box['BottomRight'].Visible	= true;
 			Box['BottomRight'].Color	= Color;
-			Box['BottomRight'].From		= Vector2.new(BRPos.X, BRPos.Y);
-			Box['BottomRight'].To		= Vector2.new(BLPos.X, BLPos.Y);
+			Box['BottomRight'].From		= V2New(BRPos.X, BRPos.Y);
+			Box['BottomRight'].To		= V2New(BLPos.X, BLPos.Y);
 		else
 			Box['BottomRight'].Visible	= false;
 		end
 		-- ## END UGLY CODE
-		if Properties then
+		if Properties and typeof(Properties) == 'table' then
 			GetTableData(Properties)(function(i, v)
 				pcall(Set, Box['TopLeft'],		i, v);
 				pcall(Set, Box['TopRight'],		i, v);
@@ -540,8 +532,6 @@ function LineBox:Create(Properties)
 end
 
 function CreateMenu(NewPosition) -- Create Menu
-	
-
 	local function FromHex(HEX)
 		HEX = HEX:gsub('#', '');
 		return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
@@ -561,23 +551,13 @@ function CreateMenu(NewPosition) -- Create Menu
 	};
 
 	MenuLoaded = false;
+	UIButtons  = {};
+	Sliders	   = {};
 
-	-- GetTableData(UIButtons)(function(i, v)
-	-- 	v.Instance.Visible = false;
-	-- 	v.Instance:Remove();
-	-- end)
-	-- GetTableData(Sliders)(function(i, v)
-	-- 	v.Instance.Visible = false;
-	-- 	v.Instance:Remove();
-	-- end)
+	local BaseSize = V2New(300, 630);
+	local BasePosition = NewPosition or V2New(Camera.ViewportSize.X / 8 - (BaseSize.X / 2), Camera.ViewportSize.Y / 2 - (BaseSize.Y / 2));
 
-	UIButtons	= {};
-	Sliders		= {};
-
-	local BaseSize = Vector2.new(300, 630);
-	local BasePosition = NewPosition or Vector2.new(Camera.ViewportSize.X / 8 - (BaseSize.X / 2), Camera.ViewportSize.Y / 2 - (BaseSize.Y / 2));
-
-	BasePosition = Vector2.new(math.clamp(BasePosition.X, 0, Camera.ViewportSize.X), math.clamp(BasePosition.Y, 0, Camera.ViewportSize.Y));
+	BasePosition = V2New(math.clamp(BasePosition.X, 0, Camera.ViewportSize.X), math.clamp(BasePosition.Y, 0, Camera.ViewportSize.Y));
 
 	Menu:AddMenuInstance('CrosshairX', 'Line', {
 		Visible			= false;
@@ -604,35 +584,35 @@ function CreateMenu(NewPosition) -- Create Menu
 	end);
 	Menu:AddMenuInstance('TopBar', 'Square', {
 		Position	= BasePosition;
-		Size		= Vector2.new(BaseSize.X, 15);
+		Size		= V2New(BaseSize.X, 15);
 		Color		= Colors.Primary.Dark;
 		Filled		= true;
 		Visible		= true;
 	});
 	Menu:AddMenuInstance('TopBarTwo', 'Square', {
-		Position 	= BasePosition + Vector2.new(0, 15);
-		Size		= Vector2.new(BaseSize.X, 45);
+		Position 	= BasePosition + V2New(0, 15);
+		Size		= V2New(BaseSize.X, 45);
 		Color		= Colors.Primary.Main;
 		Filled		= true;
 		Visible		= true;
 	});
 	Menu:AddMenuInstance('TopBarText', 'Text', {
 		Size 		= 25;
-		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + Vector2.new(25, 10);
+		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(25, 10);
 		Text		= 'Unnamed ESP';
 		Color		= Colors.Secondary.Light;
 		Visible		= true;
 	});
 	Menu:AddMenuInstance('TopBarTextBR', 'Text', {
 		Size 		= 15;
-		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + Vector2.new(BaseSize.X - 65, 25);
+		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(BaseSize.X - 65, 25);
 		Text		= 'by ic3w0lf';
 		Color		= Colors.Secondary.Dark;
 		Visible		= true;
 	});
 	Menu:AddMenuInstance('Filling', 'Square', {
-		Size		= BaseSize - Vector2.new(0, 60);
-		Position	= BasePosition + Vector2.new(0, 60);
+		Size		= BaseSize - V2New(0, 60);
+		Position	= BasePosition + V2New(0, 60);
 		Filled		= true;
 		Color		= Colors.Secondary.Main;
 		Transparency= .5;
@@ -644,12 +624,12 @@ function CreateMenu(NewPosition) -- Create Menu
 	GetTableData(Options)(function(i, v)
 		if typeof(v.Value) == 'boolean' and not IsStringEmpty(v.Text) and v.Text ~= nil then
 			CPos 				= CPos + 25;
-			local BaseSize		= Vector2.new(BaseSize.X, 30);
-			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + Vector2.new(30, v.Index * 25 - 10);
+			local BaseSize		= V2New(BaseSize.X, 30);
+			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(30, v.Index * 25 - 10);
 			UIButtons[#UIButtons + 1] = {
 				Option = v;
 				Instance = Menu:AddMenuInstance(Format('%s_Hitbox', v.Name), 'Square', {
-					Position	= BasePosition - Vector2.new(30, 15);
+					Position	= BasePosition - V2New(30, 15);
 					Size		= BaseSize;
 					Visible		= false;
 				});
@@ -671,7 +651,7 @@ function CreateMenu(NewPosition) -- Create Menu
 			Menu:AddMenuInstance(Format('%s_Text', v.Name), 'Text', {
 				Text		= v.Text;
 				Size		= 20;
-				Position	= BasePosition + Vector2.new(20, -10);
+				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Primary.Dark;
 			});
@@ -681,13 +661,13 @@ function CreateMenu(NewPosition) -- Create Menu
 		if typeof(v.Value) == 'number' then
 			CPos 				= CPos + 25;
 
-			local BaseSize		= Vector2.new(BaseSize.X, 30);
-			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + Vector2.new(0, CPos - 10);
+			local BaseSize		= V2New(BaseSize.X, 30);
+			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(0, CPos - 10);
 
 			local Text			= Menu:AddMenuInstance(Format('%s_Text', v.Name), 'Text', {
 				Text			= v.Text;
 				Size			= 20;
-				Position		= BasePosition + Vector2.new(20, -10);
+				Position		= BasePosition + V2New(20, -10);
 				Visible			= true;
 				Color			= Colors.Primary.Dark;
 			});
@@ -703,8 +683,8 @@ function CreateMenu(NewPosition) -- Create Menu
 				Color			= Colors.Primary.Dark;
 				Thickness		= 3;
 				Visible			= true;
-				From			= BasePosition + Vector2.new(20, 20);
-				To				= BasePosition + Vector2.new(BaseSize.X - 10, 20);
+				From			= BasePosition + V2New(20, 20);
+				To				= BasePosition + V2New(BaseSize.X - 10, 20);
 			});
 			CPos = CPos + 10;
 			local Slider		= Menu:AddMenuInstance(Format('%s_Slider', v.Name), 'Circle', {
@@ -712,7 +692,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Filled			= true;
 				Radius			= 6;
 				Color			= Colors.Secondary.Dark;
-				Position		= BasePosition + Vector2.new(35, 20);
+				Position		= BasePosition + V2New(35, 20);
 			})
 
 			local CSlider = {Slider = Slider; Line = Line; Min = v.AllArgs[4]; Max = v.AllArgs[5]; Option = v};
@@ -722,11 +702,11 @@ function CreateMenu(NewPosition) -- Create Menu
 			-- local Size = math.abs(Line.From.X - Line.To.X);
 			-- local Value = Size * (Percent / 100); -- this shit's inaccurate but fuck it i'm not even gonna bother fixing it
 
-			Slider.Position = BasePosition + Vector2.new(40, 20);
+			Slider.Position = BasePosition + V2New(40, 20);
 			
 			v.BaseSize = BaseSize;
 			v.BasePosition = BasePosition;
-			AMT.Position = BasePosition + Vector2.new(BaseSize.X - AMT.TextBounds.X - 10, -10)
+			AMT.Position = BasePosition + V2New(BaseSize.X - AMT.TextBounds.X - 10, -10)
 		end
 	end)
 	local FirstItem = false;
@@ -735,16 +715,16 @@ function CreateMenu(NewPosition) -- Create Menu
 			CPos 				= CPos + (not FirstItem and 30 or 25);
 			FirstItem			= true;
 
-			local BaseSize		= Vector2.new(BaseSize.X, FirstItem and 30 or 25);
-			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + Vector2.new(0, CPos - 10);
+			local BaseSize		= V2New(BaseSize.X, FirstItem and 30 or 25);
+			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(0, CPos - 10);
 
 			UIButtons[#UIButtons + 1] = {
 				Option = v;
 				Instance = Menu:AddMenuInstance(Format('%s_Hitbox', v.Name), 'Square', {
-					Size		= Vector2.new(BaseSize.X, 20) - Vector2.new(30, 0);
+					Size		= V2New(BaseSize.X, 20) - V2New(30, 0);
 					Visible		= true;
 					Transparency= .5;
-					Position	= BasePosition + Vector2.new(15, -10);
+					Position	= BasePosition + V2New(15, -10);
 					Color		= Colors.Secondary.Light;
 					Filled		= true;
 				});
@@ -752,7 +732,7 @@ function CreateMenu(NewPosition) -- Create Menu
 			local Text		= Menu:AddMenuInstance(Format('%s_Text', v.Name), 'Text', {
 				Text		= v.Text;
 				Size		= 20;
-				Position	= BasePosition + Vector2.new(20, -10);
+				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Primary.Dark;
 			});
@@ -766,21 +746,21 @@ function CreateMenu(NewPosition) -- Create Menu
 
 			Options[i].BaseSize = BaseSize;
 			Options[i].BasePosition = BasePosition;
-			BindText.Position = BasePosition + Vector2.new(BaseSize.X - BindText.TextBounds.X - 20, -10);
+			BindText.Position = BasePosition + V2New(BaseSize.X - BindText.TextBounds.X - 20, -10);
 		end
 	end)
 	GetTableData(Options)(function(i, v) -- just to make sure certain things are drawn before or after others, too lazy to actually sort table
 		if typeof(v.Value) == 'function' then
-			local BaseSize		= Vector2.new(BaseSize.X, 30);
-			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + Vector2.new(0, CPos + (25 * v.AllArgs[4]) - 35);
+			local BaseSize		= V2New(BaseSize.X, 30);
+			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(0, CPos + (25 * v.AllArgs[4]) - 35);
 
 			UIButtons[#UIButtons + 1] = {
 				Option = v;
 				Instance = Menu:AddMenuInstance(Format('%s_Hitbox', v.Name), 'Square', {
-					Size		= Vector2.new(BaseSize.X, 20) - Vector2.new(30, 0);
+					Size		= V2New(BaseSize.X, 20) - V2New(30, 0);
 					Visible		= true;
 					Transparency= .5;
-					Position	= BasePosition + Vector2.new(15, -10);
+					Position	= BasePosition + V2New(15, -10);
 					Color		= Colors.Secondary.Light;
 					Filled		= true;
 				});
@@ -788,12 +768,12 @@ function CreateMenu(NewPosition) -- Create Menu
 			local Text		= Menu:AddMenuInstance(Format('%s_Text', v.Name), 'Text', {
 				Text		= v.Text;
 				Size		= 20;
-				Position	= BasePosition + Vector2.new(20, -10);
+				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Primary.Dark;
 			});
 
-			-- BindText.Position = BasePosition + Vector2.new(BaseSize.X - BindText.TextBounds.X - 10, -10);
+			-- BindText.Position = BasePosition + V2New(BaseSize.X - BindText.TextBounds.X - 10, -10);
 		end
 	end)
 
@@ -834,7 +814,7 @@ shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 			Bar.Position.X + Bar.Size.X;
 			Bar.Position.Y + Bar.Size.Y;
 		}
-		if MouseHoveringOver(Values) then -- and not syn then -- disable dragging for synapse cuz idk why it breaks
+		if MouseHoveringOver(Values) then
 			DraggingUI = true;
 			DragOffset = Menu:GetInstance'Main'.Position - GetMouseLocation();
 		else
@@ -1032,21 +1012,21 @@ function UpdatePlayerData()
 				local Pass, Distance = CheckDistance(v.Instance);
 
 				if Pass then
-					local ScreenPosition, Vis = Camera:WorldToViewportPoint(v.Instance.Position);
+					local ScreenPosition, Vis = WorldToViewport(v.Instance.Position);
 					local Color = v.Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(v.Instance.Position);
 					
 					if ScreenPosition.Z < 0 then
 						local AT = math.atan2(OPos.Y, OPos.X) + math.pi;
-						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(Vector3.new(0, 0, -1))));
+						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(V3New(0, 0, -1))));
 					end
 					
-					local Position = Camera:WorldToViewportPoint(Camera.CFrame:pointToWorldSpace(OPos));
+					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
 						Tracer.Visible	= true;
-						Tracer.From		= Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
-						Tracer.To		= Vector2.new(Position.X, Position.Y);
+						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
+						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
 						Tracer.Visible = false;
@@ -1054,7 +1034,7 @@ function UpdatePlayerData()
 
 					if ScreenPosition.Z > 0 then
 						local ScreenPositionUpper = ScreenPosition;
-						-- Camera:WorldToViewportPoint((v.Instance.CFrame * CFrame.new(0, v.Instance.Size.Y, 0)).p);
+						-- WorldToViewport((v.Instance.CFrame * CFrame.new(0, v.Instance.Size.Y, 0)).p);
 						
 						if Options.ShowName.Value then
 							LocalPlayer.NameDisplayDistance = 0;
@@ -1062,7 +1042,7 @@ function UpdatePlayerData()
 							NameTag.Text		= v.Text;
 							NameTag.Size		= Options.TextSize.Value;
 							NameTag.Outline		= Options.TextOutline.Value;
-							NameTag.Position	= Vector2.new(ScreenPositionUpper.X, ScreenPositionUpper.Y);
+							NameTag.Position	= V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y);
 							NameTag.Color		= Color;
 							if Drawing.Fonts and shared.am_ic3 then -- CURRENTLY SYNAPSE ONLY :MEGAHOLY:
 								NameTag.Font	= Drawing.Fonts.Monospace;
@@ -1087,7 +1067,7 @@ function UpdatePlayerData()
 							end
 
 							DistanceTag.Text = Str;
-							DistanceTag.Position = Vector2.new(ScreenPositionUpper.X, ScreenPositionUpper.Y) + Vector2.new(0, NameTag.TextBounds.Y);
+							DistanceTag.Position = V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y) + V2New(0, NameTag.TextBounds.Y);
 						else
 							DistanceTag.Visible = false;
 						end
@@ -1147,28 +1127,28 @@ function UpdatePlayerData()
 				local HumanoidRootPart = v.Character:FindFirstChild'HumanoidRootPart';
 				
 				if v.Character ~= nil and Head and HumanoidRootPart then
-					local ScreenPosition, Vis 	= Camera:WorldToViewportPoint(Head.Position);
+					local ScreenPosition, Vis 	= WorldToViewport(Head.Position);
 					local Color = Options.Rainbow.Value and Color3.fromHSV(tick() * 128 % 255/255, 1, 1) or (CheckTeam(v) and Green or Red); Color = Options.ShowTeamColor.Value and v.TeamColor.Color or Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(Head.Position);
 					
 					if ScreenPosition.Z < 0 then
 						local AT = math.atan2(OPos.Y, OPos.X) + math.pi;
-						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(Vector3.new(0, 0, -1))));
+						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(V3New(0, 0, -1))));
 					end
 					
-					local Position = Camera:WorldToViewportPoint(Camera.CFrame:pointToWorldSpace(OPos));
+					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
 						Tracer.Visible	= true;
-						Tracer.From		= Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
-						Tracer.To		= Vector2.new(Position.X, Position.Y);
+						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
+						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
 						Tracer.Visible = false;
 					end
 					
 					if ScreenPosition.Z > 0 then
-						local ScreenPositionUpper	= Camera:WorldToViewportPoint((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y, 0)).p);
+						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y, 0)).p);
 						local Scale					= Head.Size.Y / 2;
 
 						if Options.ShowName.Value then
@@ -1176,7 +1156,7 @@ function UpdatePlayerData()
 							NameTag.Text		= v.Name .. (CustomPlayerTag and CustomPlayerTag(v) or '');
 							NameTag.Size		= Options.TextSize.Value;
 							NameTag.Outline		= Options.TextOutline.Value;
-							NameTag.Position	= Vector2.new(ScreenPositionUpper.X, ScreenPositionUpper.Y) - Vector2.new(0, NameTag.TextBounds.Y);
+							NameTag.Position	= V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y) - V2New(0, NameTag.TextBounds.Y);
 							NameTag.Color		= Color;
 							NameTag.Transparency= 0.85;
 							if Drawing.Fonts and shared.am_ic3 then -- CURRENTLY SYNAPSE ONLY :MEGAHOLY:
@@ -1206,24 +1186,24 @@ function UpdatePlayerData()
 							end
 
 							DistanceTag.Text = Str;
-							DistanceTag.Position = (NameTag.Visible and NameTag.Position + Vector2.new(0, NameTag.TextBounds.Y) or Vector2.new(ScreenPositionUpper.X, ScreenPositionUpper.Y));
+							DistanceTag.Position = (NameTag.Visible and NameTag.Position + V2New(0, NameTag.TextBounds.Y) or V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y));
 						else
 							DistanceTag.Visible = false;
 						end
 						if Options.ShowDot.Value and Vis then
-							local Top			= Camera:WorldToViewportPoint((Head.CFrame * CFrame.new(0, Scale, 0)).p);
-							local Bottom		= Camera:WorldToViewportPoint((Head.CFrame * CFrame.new(0, -Scale, 0)).p);
+							local Top			= WorldToViewport((Head.CFrame * CFrame.new(0, Scale, 0)).p);
+							local Bottom		= WorldToViewport((Head.CFrame * CFrame.new(0, -Scale, 0)).p);
 							local Radius		= (Top - Bottom).y;
 
 							HeadDot.Visible		= true;
 							HeadDot.Color		= Color;
-							HeadDot.Position	= Vector2.new(ScreenPosition.X, ScreenPosition.Y);
+							HeadDot.Position	= V2New(ScreenPosition.X, ScreenPosition.Y);
 							HeadDot.Radius		= Radius;
 						else
 							HeadDot.Visible = false;
 						end
 						if Options.ShowBoxes.Value and Vis and HumanoidRootPart then
-							Box:Update(HumanoidRootPart.CFrame, Vector3.new(2, 3, 0) * (Scale * 2), Color);
+							Box:Update(HumanoidRootPart.CFrame, V3New(2, 3, 0) * (Scale * 2), Color);
 						else
 							Box:SetVisible(false);
 						end
@@ -1258,6 +1238,7 @@ function Update()
 
 		if Camera.Parent ~= workspace then
 			Camera = workspace.CurrentCamera;
+			WTVP = Camera.WorldToViewportPoint;
 		end
 
 		for i, v in pairs(shared.InstanceData) do
@@ -1290,10 +1271,10 @@ function Update()
 		CX.Visible = true;
 		CY.Visible = true;
 
-		CX.To = Vector2.new((Camera.ViewportSize.X / 2) - 8, (Camera.ViewportSize.Y / 2));
-		CX.From = Vector2.new((Camera.ViewportSize.X / 2) + 8, (Camera.ViewportSize.Y / 2));
-		CY.To = Vector2.new((Camera.ViewportSize.X / 2), (Camera.ViewportSize.Y / 2) - 8);
-		CY.From = Vector2.new((Camera.ViewportSize.X / 2), (Camera.ViewportSize.Y / 2) + 8);
+		CX.To = V2New((Camera.ViewportSize.X / 2) - 8, (Camera.ViewportSize.Y / 2));
+		CX.From = V2New((Camera.ViewportSize.X / 2) + 8, (Camera.ViewportSize.Y / 2));
+		CY.To = V2New((Camera.ViewportSize.X / 2), (Camera.ViewportSize.Y / 2) - 8);
+		CY.From = V2New((Camera.ViewportSize.X / 2), (Camera.ViewportSize.Y / 2) + 8);
 	else
 		CX.Visible = false;
 		CY.Visible = false;
@@ -1316,18 +1297,18 @@ function Update()
 			-- GUIService:SetMenuIsOpen(true);
 			Menu:UpdateMenuInstance'Cursor1'{
 				Visible	= true;
-				From	= Vector2.new(MLocation.x, MLocation.y);
-				To		= Vector2.new(MLocation.x + 5, MLocation.y + 6);
+				From	= V2New(MLocation.x, MLocation.y);
+				To		= V2New(MLocation.x + 5, MLocation.y + 6);
 			}
 			Menu:UpdateMenuInstance'Cursor2'{
 				Visible	= true;
-				From	= Vector2.new(MLocation.x, MLocation.y);
-				To		= Vector2.new(MLocation.x, MLocation.y + 8);
+				From	= V2New(MLocation.x, MLocation.y);
+				To		= V2New(MLocation.x, MLocation.y + 8);
 			}
 			Menu:UpdateMenuInstance'Cursor3'{
 				Visible	= true;
-				From	= Vector2.new(MLocation.x, MLocation.y + 6);
-				To		= Vector2.new(MLocation.x + 5, MLocation.y + 5);
+				From	= V2New(MLocation.x, MLocation.y + 6);
+				To		= V2New(MLocation.x + 5, MLocation.y + 5);
 			}
 		else
 			if Debounce.CursorVis then
@@ -1340,7 +1321,7 @@ function Update()
 		end
 		if MouseHeld then
 			if Dragging then
-				DraggingWhat.Slider.Position = Vector2.new(math.clamp(MLocation.X, DraggingWhat.Line.From.X, DraggingWhat.Line.To.X), DraggingWhat.Slider.Position.Y);
+				DraggingWhat.Slider.Position = V2New(math.clamp(MLocation.X, DraggingWhat.Line.From.X, DraggingWhat.Line.To.X), DraggingWhat.Slider.Position.Y);
 				local Percent	= (DraggingWhat.Slider.Position.X - DraggingWhat.Line.From.X) / ((DraggingWhat.Line.To.X - DraggingWhat.Line.From.X));
 				local Value		= CalculateValue(DraggingWhat.Min, DraggingWhat.Max, Percent);
 				DraggingWhat.Option(Value);
