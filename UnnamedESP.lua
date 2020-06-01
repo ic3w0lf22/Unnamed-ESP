@@ -1,6 +1,6 @@
 assert(Drawing, 'exploit not supported')
 
-local UserInputService	= game:GetService'UserInputService';
+local UserInputService		= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
 local RunService		= game:GetService'RunService';
@@ -11,7 +11,7 @@ local Mouse			= LocalPlayer:GetMouse();
 local V2New			= Vector2.new;
 local V3New			= Vector3.new;
 local WTVP			= Camera.WorldToViewportPoint;
-local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
+local WorldToViewport		= function(...) return WTVP(Camera, ...) end;
 local Menu			= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
@@ -33,9 +33,9 @@ local Green			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
 
-if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
+-- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
-shared.MenuDrawingData		= shared.MenuDrawingData or { Instances = {} };
+shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
 shared.InstanceData		= shared.InstanceData or {};
 shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
@@ -136,6 +136,28 @@ local CustomPlayerTag;
 local CustomESP;
 
 local Modules = {
+	[292439477] = {
+		CustomESP = function()
+			if not shared.PF_Replication then
+				for i, v in pairs(getgc(true)) do
+					if typeof(v) == 'table' and rawget(v, 'getbodyparts') then
+						shared.PF_Replication = v;
+						break;
+					end
+				end
+			else
+				for Index, Player in pairs(Players:GetPlayers()) do
+					if Player.Character == nil or not Player.Character:IsDescendantOf(workspace) then
+						local Body = shared.PF_Replication.getbodyparts(Player);
+
+						if Body and typeof(Body) == 'table' and rawget(Body, 'rootpart') then
+							Player.Character = Body.rootpart.Parent;
+						end
+					end
+				end
+			end
+		end
+	};
 	[2262441883] = {
 		CustomPlayerTag = function(Player)
 			return Player:FindFirstChild'Job' and (' [' .. Player.Job.Value .. ']') or '';
@@ -980,7 +1002,8 @@ function UpdatePlayerData()
 	if (tick() - LastRefresh) > (Options.RefreshRate.Value / 1000) then
 		LastRefresh = tick();
 		if CustomESP and Options.Enabled.Value then
-			pcall(CustomESP);
+			local a, b = pcall(CustomESP);
+			-- print(a, b);
 		end
 		for i, v in pairs(RenderList.Instances) do
 			if v.Instance ~= nil and v.Instance.Parent ~= nil and v.Instance:IsA'BasePart' then
@@ -1025,7 +1048,7 @@ function UpdatePlayerData()
 
 					if Options.ShowTracers.Value then
 						Tracer.Visible	= true;
-						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
+						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 65);
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
@@ -1140,7 +1163,8 @@ function UpdatePlayerData()
 
 					if Options.ShowTracers.Value then
 						Tracer.Visible	= true;
-						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2);
+						Tracer.Transparency = 0.6;
+						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 65);
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
