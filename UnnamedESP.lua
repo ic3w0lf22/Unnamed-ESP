@@ -32,6 +32,8 @@ local Red			= Color3.new(1, 0, 0);
 local Green			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
+local TracerPosition		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+local DragTracerPosition	= false;
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
@@ -212,6 +214,17 @@ local Modules = {
 					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
 					-- if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, '');  end
 					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Player.Character:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
+					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
+						local FM = Player.Character.Head:FindFirstChild'FacialMarking';
+						if FM.Texture == 'http://www.roblox.com/asset/?id=4072968006' then
+							table.insert(Extra, 'HEALER');
+						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4072914434' then
+							table.insert(Extra, 'SEER');
+						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4094417635' then
+							table.insert(Extra, 'JESTER');
+						end
+					end
 					-- if Player.Character:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
 					-- if Player.Character:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
 				end
@@ -219,6 +232,7 @@ local Modules = {
 					if Player.Backpack:FindFirstChild'Observe' 			then table.insert(Extra, 'ILL');  end
 					if Player.Backpack:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
 					if Player.Backpack:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Player.Backpack:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
 					-- if Player.Backpack:FindFirstChild'ObserveBlock' 	then table.insert(Extra, 'OB');   end
 					-- if Player.Backpack:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
 					-- if Player.Backpack:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
@@ -241,6 +255,7 @@ local Modules = {
 			if Player:FindFirstChild'leaderstats' then
 				Name = Name .. '\n[';
 				local Prefix = '';
+				local Extra = {};
 				if Player.leaderstats:FindFirstChild'Prestige' and Player.leaderstats.Prestige.ClassName == 'IntValue' and Player.leaderstats.Prestige.Value > 0 then
 					Name = Name .. '#' .. tostring(Player.leaderstats.Prestige.Value) .. ' ';
 				end
@@ -257,6 +272,41 @@ local Modules = {
 					Name = Name .. ', ' .. Player.leaderstats.UberTitle.Value;
 				end
 				if not IsStringEmpty(Name) then Name = Name .. ']'; end
+
+				if Player.Character then
+					if Player.Character and Player.Character:FindFirstChild'Danger' then table.insert(Extra, 'D'); end
+					if Player.Character:FindFirstChild'ManaAbilities' and Player.Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
+
+					if Player.Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Player.Character.Mana.Value)); end
+					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
+					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
+					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
+					-- if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, '');  end
+					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
+						local FM = Player.Character.Head:FindFirstChild'FacialMarking';
+						if FM.Texture == 'http://www.roblox.com/asset/?id=4072968006' then
+							table.insert(Extra, 'HEALER');
+						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4072914434' then
+							table.insert(Extra, 'SEER');
+						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4094417635' then
+							table.insert(Extra, 'JESTER');
+						end
+					end
+					-- if Player.Character:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
+					-- if Player.Character:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
+				end
+				if Player:FindFirstChild'Backpack' then
+					if Player.Backpack:FindFirstChild'Observe' 			then table.insert(Extra, 'ILL');  end
+					if Player.Backpack:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
+					if Player.Backpack:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					-- if Player.Backpack:FindFirstChild'ObserveBlock' 	then table.insert(Extra, 'OB');   end
+					-- if Player.Backpack:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
+					-- if Player.Backpack:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
+					-- if Player.Backpack:FindFirstChild'Gate' then table.insert(Extra, ''); end
+				end
+
+				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
 				-- if Player.leaderstats:FindFirstChild'Gender' and Player.leaderstats.Gender.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.Gender.Value) then
 				-- 	Name = Name .. string.format(' [%s]', Player.leaderstats.Gender.Value:sub(1, 1));
 				-- end
@@ -265,7 +315,7 @@ local Modules = {
 			return Name;
 		end;
 	};
-}
+} Modules[5208655184] = Modules[3016661674];
 
 if Modules[game.PlaceId] ~= nil then
 	local Module = Modules[game.PlaceId];
@@ -429,6 +479,7 @@ Options('Rainbow', 'Rainbow Mode', false);
 Options('TextSize', 'Text Size', syn and 18 or 14, 10, 24); -- cuz synapse fonts look weird???
 Options('MaxDistance', 'Max Distance', 2500, 100, 25000);
 Options('RefreshRate', 'Refresh Rate (ms)', 5, 1, 200);
+Options('YOffset', 'Y Offset', 0, -200, 200);
 -- Options('RefreshRate', 'Refresh Rate (ms)', 1, 1, #Drawing.Fonts);
 Options('MenuKey', 'Menu Key', Enum.KeyCode.F4, 1);
 Options('ToggleKey', 'Toggle Key', Enum.KeyCode.F3, 1);
@@ -471,14 +522,18 @@ function LineBox:Create(Properties)
 
 	local Properties = Combine({
 		Transparency	= 1;
-		Thickness		= 1;
+		Thickness		= 3;
 		Visible			= true;
 	}, Properties);
 
-	Box['TopLeft']		= NewDrawing'Line'(Properties);
-	Box['TopRight']		= NewDrawing'Line'(Properties);
-	Box['BottomLeft']	= NewDrawing'Line'(Properties);
-	Box['BottomRight']	= NewDrawing'Line'(Properties);
+	if syn then
+		Box['Quad']				= NewDrawing'Quad'(Properties);
+	else
+		Box['TopLeft']		= NewDrawing'Line'(Properties);
+		Box['TopRight']		= NewDrawing'Line'(Properties);
+		Box['BottomLeft']	= NewDrawing'Line'(Properties);
+		Box['BottomRight']	= NewDrawing'Line'(Properties);
+	end
 
 	function Box:Update(CF, Size, Color, Properties)
 		if not CF or not Size then return end
@@ -488,66 +543,83 @@ function LineBox:Create(Properties)
 		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).p);
 		local BRPos, Visible4	= WorldToViewport((CF * CFrame.new(-Size.X, -Size.Y, 0)).p);
 
-		Visible1 = TLPos.Z > 0 -- (commented | reason: random flashes);
-		Visible2 = TRPos.Z > 0 -- (commented | reason: random flashes);
-		Visible3 = BLPos.Z > 0 -- (commented | reason: random flashes);
-		Visible4 = BRPos.Z > 0 -- (commented | reason: random flashes);
+		local Quad = Box['Quad'];
 
-		-- ## BEGIN UGLY CODE
-		if Visible1 then
-			Box['TopLeft'].Visible		= true;
-			Box['TopLeft'].Color		= Color;
-			Box['TopLeft'].From			= V2New(TLPos.X, TLPos.Y);
-			Box['TopLeft'].To			= V2New(TRPos.X, TRPos.Y);
+		if syn then
+			if Visible1 and Visible2 and Visible3 and Visible4 then
+				Quad.Visible = true;
+				Quad.Color	= Color;
+				Quad.PointA = V2New(TLPos.X, TLPos.Y);
+				Quad.PointB = V2New(TRPos.X, TRPos.Y);
+				Quad.PointC = V2New(BRPos.X, BRPos.Y);
+				Quad.PointD = V2New(BLPos.X, BLPos.Y);
+			else
+				Box['Quad'].Visible = false;
+			end
 		else
-			Box['TopLeft'].Visible		= false;
-		end
-		if Visible2 then
-			Box['TopRight'].Visible		= true;
-			Box['TopRight'].Color		= Color;
-			Box['TopRight'].From		= V2New(TRPos.X, TRPos.Y);
-			Box['TopRight'].To			= V2New(BRPos.X, BRPos.Y);
-		else
-			Box['TopRight'].Visible		= false;
-		end
-		if Visible3 then
-			Box['BottomLeft'].Visible	= true;
-			Box['BottomLeft'].Color		= Color;
-			Box['BottomLeft'].From		= V2New(BLPos.X, BLPos.Y);
-			Box['BottomLeft'].To		= V2New(TLPos.X, TLPos.Y);
-		else
-			Box['BottomLeft'].Visible	= false;
-		end
-		if Visible4 then
-			Box['BottomRight'].Visible	= true;
-			Box['BottomRight'].Color	= Color;
-			Box['BottomRight'].From		= V2New(BRPos.X, BRPos.Y);
-			Box['BottomRight'].To		= V2New(BLPos.X, BLPos.Y);
-		else
-			Box['BottomRight'].Visible	= false;
-		end
-		-- ## END UGLY CODE
-		if Properties and typeof(Properties) == 'table' then
-			GetTableData(Properties)(function(i, v)
-				pcall(Set, Box['TopLeft'],		i, v);
-				pcall(Set, Box['TopRight'],		i, v);
-				pcall(Set, Box['BottomLeft'],	i, v);
-				pcall(Set, Box['BottomRight'],	i, v);
-			end)
+			Visible1 = TLPos.Z > 0 -- (commented | reason: random flashes);
+			Visible2 = TRPos.Z > 0 -- (commented | reason: random flashes);
+			Visible3 = BLPos.Z > 0 -- (commented | reason: random flashes);
+			Visible4 = BRPos.Z > 0 -- (commented | reason: random flashes);
+
+			-- ## BEGIN UGLY CODE
+			if Visible1 then
+				Box['TopLeft'].Visible		= true;
+				Box['TopLeft'].Color		= Color;
+				Box['TopLeft'].From			= V2New(TLPos.X, TLPos.Y);
+				Box['TopLeft'].To			= V2New(TRPos.X, TRPos.Y);
+			else
+				Box['TopLeft'].Visible		= false;
+			end
+			if Visible2 then
+				Box['TopRight'].Visible		= true;
+				Box['TopRight'].Color		= Color;
+				Box['TopRight'].From		= V2New(TRPos.X, TRPos.Y);
+				Box['TopRight'].To			= V2New(BRPos.X, BRPos.Y);
+			else
+				Box['TopRight'].Visible		= false;
+			end
+			if Visible3 then
+				Box['BottomLeft'].Visible	= true;
+				Box['BottomLeft'].Color		= Color;
+				Box['BottomLeft'].From		= V2New(BLPos.X, BLPos.Y);
+				Box['BottomLeft'].To		= V2New(TLPos.X, TLPos.Y);
+			else
+				Box['BottomLeft'].Visible	= false;
+			end
+			if Visible4 then
+				Box['BottomRight'].Visible	= true;
+				Box['BottomRight'].Color	= Color;
+				Box['BottomRight'].From		= V2New(BRPos.X, BRPos.Y);
+				Box['BottomRight'].To		= V2New(BLPos.X, BLPos.Y);
+			else
+				Box['BottomRight'].Visible	= false;
+			end
+			-- ## END UGLY CODE
+			if Properties and typeof(Properties) == 'table' then
+				GetTableData(Properties)(function(i, v)
+					pcall(Set, Box['TopLeft'],		i, v);
+					pcall(Set, Box['TopRight'],		i, v);
+					pcall(Set, Box['BottomLeft'],	i, v);
+					pcall(Set, Box['BottomRight'],	i, v);
+				end)
+			end
 		end
 	end
 	function Box:SetVisible(bool)
-		pcall(Set, Box['TopLeft'],		'Visible', bool);
-		pcall(Set, Box['TopRight'],		'Visible', bool);
-		pcall(Set, Box['BottomLeft'],	'Visible', bool);
-		pcall(Set, Box['BottomRight'],	'Visible', bool);
+		pcall(Set, Box['Quad'],				'Visible', bool);
+		-- pcall(Set, Box['TopLeft'],		'Visible', bool);
+		-- pcall(Set, Box['TopRight'],		'Visible', bool);
+		-- pcall(Set, Box['BottomLeft'],	'Visible', bool);
+		-- pcall(Set, Box['BottomRight'],	'Visible', bool);
 	end
 	function Box:Remove()
 		self:SetVisible(false);
-		Box['TopLeft']:Remove();
-		Box['TopRight']:Remove();
-		Box['BottomLeft']:Remove();
-		Box['BottomRight']:Remove();
+		Box['Quad']:Remove();
+		-- Box['TopLeft']:Remove();
+		-- Box['TopRight']:Remove();
+		-- Box['BottomLeft']:Remove();
+		-- Box['BottomRight']:Remove();
 	end
 
 	return Box;
@@ -576,7 +648,7 @@ function CreateMenu(NewPosition) -- Create Menu
 	UIButtons  = {};
 	Sliders	   = {};
 
-	local BaseSize = V2New(300, 630);
+	local BaseSize = V2New(300, 665);
 	local BasePosition = NewPosition or V2New(Camera.ViewportSize.X / 8 - (BaseSize.X / 2), Camera.ViewportSize.Y / 2 - (BaseSize.Y / 2));
 
 	BasePosition = V2New(math.clamp(BasePosition.X, 0, Camera.ViewportSize.X), math.clamp(BasePosition.Y, 0, Camera.ViewportSize.Y));
@@ -695,7 +767,7 @@ function CreateMenu(NewPosition) -- Create Menu
 			});
 			local AMT			= Menu:AddMenuInstance(Format('%s_AmountText', v.Name), 'Text', {
 				Text			= tostring(v.Value);
-				Size			= 20;
+				Size			= 22;
 				Position		= BasePosition;
 				Visible			= true;
 				Color			= Colors.Primary.Dark;
@@ -853,12 +925,25 @@ shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 					break
 				end
 			end
+
+			if not Dragging then
+				local Values = {
+					TracerPosition.X - 10;
+					TracerPosition.Y - 10;
+					TracerPosition.X + 10;
+					TracerPosition.Y + 10;
+				}
+				if MouseHoveringOver(Values) then
+					DragTracerPosition = true;
+				end
+			end
 		end
 	end
 end)
 shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 	if input.UserInputType.Name == 'MouseButton1' and Options.MenuOpen.Value then
 		MouseHeld = false;
+		DragTracerPosition = false;
 		for i, v in pairs(UIButtons) do
 			local Values = {
 				v.Instance.Position.X;
@@ -870,6 +955,17 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 				v.Option();
 				break -- prevent clicking 2 options
 			end
+		end
+	elseif input.UserInputType.Name == 'MouseButton2' and Options.MenuOpen.Value and not DragTracerPosition then
+		local Values = {
+			TracerPosition.X - 10;
+			TracerPosition.Y - 10;
+			TracerPosition.X + 10;
+			TracerPosition.Y + 10;
+		}
+		if MouseHoveringOver(Values) then
+			DragTracerPosition = false;
+			TracerPosition = V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
 		end
 	elseif input.UserInputType.Name == 'Keyboard' then
 		if Binding then
@@ -1047,8 +1143,9 @@ function UpdatePlayerData()
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
+						Tracer.Transparency = math.clamp(Distance / 200, 0.3, 0.8);
 						Tracer.Visible	= true;
-						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 65);
+						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
@@ -1162,9 +1259,14 @@ function UpdatePlayerData()
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
+						if TracerPosition.X >= Camera.ViewportSize.X or TracerPosition.Y >= Camera.ViewportSize.Y then
+							TracerPosition = V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+						end
+
 						Tracer.Visible	= true;
-						Tracer.Transparency = 0.6;
-						Tracer.From		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 65);
+						-- Tracer.Transparency = 0.6;
+						Tracer.Transparency = math.clamp(1 - (Distance / 200), 0.15, 0.75);
+						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
 					else
@@ -1172,7 +1274,7 @@ function UpdatePlayerData()
 					end
 					
 					if ScreenPosition.Z > 0 then
-						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y, 0)).p);
+						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y + (Options.YOffset.Value / 25), 0)).p);
 						local Scale					= Head.Size.Y / 2;
 
 						if Options.ShowName.Value then
@@ -1344,6 +1446,8 @@ function Update()
 			end
 		end
 		if MouseHeld then
+			local MousePos = GetMouseLocation();
+
 			if Dragging then
 				DraggingWhat.Slider.Position = V2New(math.clamp(MLocation.X, DraggingWhat.Line.From.X, DraggingWhat.Line.To.X), DraggingWhat.Slider.Position.Y);
 				local Percent	= (DraggingWhat.Slider.Position.X - DraggingWhat.Line.From.X) / ((DraggingWhat.Line.To.X - DraggingWhat.Line.From.X));
@@ -1352,11 +1456,13 @@ function Update()
 			elseif DraggingUI then
 				Debounce.UIDrag = true;
 				local Main = Menu:GetInstance'Main';
-				local MousePos = GetMouseLocation();
 				Main.Position = MousePos + DragOffset;
+			elseif DragTracerPosition then
+				TracerPosition = MousePos;
 			end
 		else
 			Dragging = false;
+			DragTracerPosition = false;
 			if DraggingUI and Debounce.UIDrag then
 				Debounce.UIDrag = false;
 				DraggingUI = false;
