@@ -1,18 +1,21 @@
 assert(Drawing, 'exploit not supported')
 
-local UserInputService		= game:GetService'UserInputService';
+if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
+
+local UserInputService	= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
+local TweenService		= game:GetService'TweenService';
 local RunService		= game:GetService'RunService';
 local Players			= game:GetService'Players';
 local LocalPlayer		= Players.LocalPlayer;
 local Camera			= workspace.CurrentCamera;
-local Mouse			= LocalPlayer:GetMouse();
-local V2New			= Vector2.new;
-local V3New			= Vector3.new;
-local WTVP			= Camera.WorldToViewportPoint;
-local WorldToViewport		= function(...) return WTVP(Camera, ...) end;
-local Menu			= {};
+local Mouse				= LocalPlayer:GetMouse();
+local V2New				= Vector2.new;
+local V3New				= Vector3.new;
+local WTVP				= Camera.WorldToViewportPoint;
+local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
+local Menu				= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
 local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
@@ -22,18 +25,26 @@ local OIndex			= 0;
 local LineBox			= {};
 local UIButtons			= {};
 local Sliders			= {};
+local ColorPicker		= { Loading = false; LastGenerated = 0 };
 local Dragging			= false;
 local DraggingUI		= false;
+local Rainbow			= false;
 local DragOffset		= V2New();
 local DraggingWhat		= nil;
 local OldData			= {};
 local IgnoreList		= {};
-local Red			= Color3.new(1, 0, 0);
-local Green			= Color3.new(0, 1, 0);
+local EnemyColor		= Color3.new(1, 0, 0);
+local TeamColor			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
-local TracerPosition		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
-local DragTracerPosition	= false;
+local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+local DragTracerPosition= false;
+local SubMenu 			= {};
+local IsSynapse 		= syn and not PROTOSMASHER_LOADED;
+local Connections 		= { Active = {} };
+local Signal 			= {}; Signal.__index = Signal;
+local CurrentColorPicker;
+local Spectating;
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
@@ -50,8 +61,10 @@ local Debounce			= setmetatable({}, {
 	end;
 });
 
+if shared.UESP_InputChangedCon then pcall(function() shared.UESP_InputChangedCon:disconnect() end); end
 if shared.UESP_InputBeganCon then pcall(function() shared.UESP_InputBeganCon:disconnect() end); end
 if shared.UESP_InputEndedCon then pcall(function() shared.UESP_InputEndedCon:disconnect() end); end
+if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose(); end
 
 local RealPrint, LastPrintTick = print, 0;
 local LatestPrints = setmetatable({}, {
@@ -68,6 +81,11 @@ local function print(...)
 		LatestPrints[Content] = tick();
 		print(Content);
 	end
+end
+
+local function FromHex(HEX)
+	HEX = HEX:gsub('#', '');
+	return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
 end
 
 local function Set(t, i, v)
@@ -120,18 +138,8 @@ local CustomTeams = { -- Games that don't use roblox's team system
 
 local RenderList = {Instances = {}};
 function RenderList:AddOrUpdateInstance(Instance, Obj2Draw, Text, Color)
-	-- print(Instance, Obj2Draw, Text, Color);
 	RenderList.Instances[Instance] = { ParentInstance = Instance; Instance = Obj2Draw; Text = Text; Color = Color };
 	return RenderList.Instances[Instance];
-end
-
-if bind then
-	-- bind('f2', function()
-	-- 	print(RenderList:AddOrUpdateInstance(LocalPlayer.Character, LocalPlayer.Character.Head, 'nigger', Color3.fromRGB(255, 255, 0)));
-	-- end)
-	-- bind('f3', function()
-	--	if tableToString then print(tableToString(RenderList)); end
-	-- end)
 end
 
 local CustomPlayerTag;
@@ -149,14 +157,42 @@ local Modules = {
 				end
 			else
 				for Index, Player in pairs(Players:GetPlayers()) do
-					if Player.Character == nil or not Player.Character:IsDescendantOf(workspace) then
-						local Body = shared.PF_Replication.getbodyparts(Player);
+					if Player == LocalPlayer then continue end
 
-						if Body and typeof(Body) == 'table' and rawget(Body, 'rootpart') then
-							Player.Character = Body.rootpart.Parent;
+					local Body = shared.PF_Replication.getbodyparts(Player);
+
+					if Body and typeof(Body) == 'table' and rawget(Body, 'rootpart') then
+						Player.Character = Body.rootpart.Parent;
+					else
+						Player.Character = nil;
+					end
+
+					-- if Player.Character == nil or not Player.Character:IsDescendantOf(workspace) then
+
+					-- end
+				end
+			end
+		end
+	};
+	[2950983942] = {
+		CustomESP = function()
+			if not shared.__FDH and (PROTOSMASHER_LOADED or syn) then
+				shared.__FDH = true;
+
+				local MT = getrawmetatable(game);
+				(setreadonly or make_writable)(MT, false);
+
+				shared.__FDOI = shared.__FDOI or MT.__index;
+
+				MT.__index = newcclosure(function(self, Index)
+					if (is_protosmasher_caller or syn_check_caller)() and typeof(Index) == 'string' and typeof(self) == 'Instance' and Index == 'Character' and self.ClassName == 'Player' then
+						if workspace:FindFirstChild'Players' then
+							return workspace.Players:FindFirstChild(self.Name);
 						end
 					end
-				end
+
+					return shared.__FDOI(self, Index);
+				end);
 			end
 		end
 	};
@@ -209,10 +245,9 @@ local Modules = {
 					if Player.Character:FindFirstChild'ManaAbilities' and Player.Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
 
 					if Player.Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Player.Character.Mana.Value)); end
-					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
-					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
-					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
-					-- if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, '');  end
+					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V'); end
+					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL'); end
+					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC'); end
 					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
 					if Player.Character:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
 					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
@@ -225,24 +260,15 @@ local Modules = {
 							table.insert(Extra, 'JESTER');
 						end
 					end
-					-- if Player.Character:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
-					-- if Player.Character:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
 				end
 				if Player:FindFirstChild'Backpack' then
 					if Player.Backpack:FindFirstChild'Observe' 			then table.insert(Extra, 'ILL');  end
 					if Player.Backpack:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
 					if Player.Backpack:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
 					if Player.Backpack:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
-					-- if Player.Backpack:FindFirstChild'ObserveBlock' 	then table.insert(Extra, 'OB');   end
-					-- if Player.Backpack:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
-					-- if Player.Backpack:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
-					-- if Player.Backpack:FindFirstChild'Gate' then table.insert(Extra, ''); end
 				end
 
 				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
-				-- if Player.leaderstats:FindFirstChild'Gender' and Player.leaderstats.Gender.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.Gender.Value) then
-				-- 	Name = Name .. string.format(' [%s]', Player.leaderstats.Gender.Value:sub(1, 1));
-				-- end
 			end
 
 			return Name;
@@ -281,7 +307,7 @@ local Modules = {
 					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
 					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
 					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
-					-- if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, '');  end
+					
 					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
 					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
 						local FM = Player.Character.Head:FindFirstChild'FacialMarking';
@@ -293,23 +319,14 @@ local Modules = {
 							table.insert(Extra, 'JESTER');
 						end
 					end
-					-- if Player.Character:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
-					-- if Player.Character:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
 				end
 				if Player:FindFirstChild'Backpack' then
 					if Player.Backpack:FindFirstChild'Observe' 			then table.insert(Extra, 'ILL');  end
 					if Player.Backpack:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
 					if Player.Backpack:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
-					-- if Player.Backpack:FindFirstChild'ObserveBlock' 	then table.insert(Extra, 'OB');   end
-					-- if Player.Backpack:FindFirstChild'Fimbulvetr' 		then table.insert(Extra, 'FIMB'); end
-					-- if Player.Backpack:FindFirstChild'Gate' 			then table.insert(Extra, 'GATE'); end
-					-- if Player.Backpack:FindFirstChild'Gate' then table.insert(Extra, ''); end
 				end
 
 				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
-				-- if Player.leaderstats:FindFirstChild'Gender' and Player.leaderstats.Gender.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.Gender.Value) then
-				-- 	Name = Name .. string.format(' [%s]', Player.leaderstats.Gender.Value:sub(1, 1));
-				-- end
 			end
 
 			return Name;
@@ -383,7 +400,6 @@ function Menu:UpdateMenuInstance(Name)
 	if Instance ~= nil then
 		return (function(Properties)
 			for i, v in pairs(Properties) do
-				-- print(Format('%s %s -> %s', Name, tostring(i), tostring(v)));
 				pcall(Set, Instance, i, v);
 			end
 			return Instance;
@@ -434,7 +450,6 @@ local Options = setmetatable({}, {
 							local AMT = Menu:GetInstance(Format('%s_AmountText', t.Name));
 							if AMT then
 								AMT.Text = tostring(t.Value);
-								AMT.Position = t.BasePosition + V2New(t.BaseSize.X - AMT.TextBounds.X - 10, -10);
 							end
 						else
 							local Inner = Menu:GetInstance(Format('%s_InnerCircle', t.Name));
@@ -452,13 +467,16 @@ function Load()
 	
 	if _ then -- extremely ugly code yea i know but i dont care p.s. i hate pcall
 		local _, Table = pcall(HttpService.JSONDecode, HttpService, Result);
-		if _ then
+		if _ and typeof(Table) == 'table' then
 			for i, v in pairs(Table) do
-				if Options[i] ~= nil and Options[i].Value ~= nil and (typeof(Options[i].Value) == 'boolean' or typeof(Options[i].Value) == 'number') then
+				if typeof(Options[i]) == 'table' and Options[i].Value ~= nil and (typeof(Options[i].Value) == 'boolean' or typeof(Options[i].Value) == 'number') then
 					Options[i].Value = v.Value;
 					pcall(Options[i], v.Value);
 				end
 			end
+
+			if Table.TeamColor then TeamColor = Color3.new(Table.TeamColor.R, Table.TeamColor.G, Table.TeamColor.B) end
+			if Table.EnemyColor then EnemyColor = Color3.new(Table.EnemyColor.R, Table.EnemyColor.G, Table.EnemyColor.B) end
 		end
 	end
 end
@@ -475,25 +493,77 @@ Options('ShowDot', 'Show Head Dot', false);
 Options('VisCheck', 'Visibility Check', false);
 Options('Crosshair', 'Crosshair', false);
 Options('TextOutline', 'Text Outline', true);
-Options('Rainbow', 'Rainbow Mode', false);
+-- Options('Rainbow', 'Rainbow Mode', false);
 Options('TextSize', 'Text Size', syn and 18 or 14, 10, 24); -- cuz synapse fonts look weird???
 Options('MaxDistance', 'Max Distance', 2500, 100, 25000);
 Options('RefreshRate', 'Refresh Rate (ms)', 5, 1, 200);
 Options('YOffset', 'Y Offset', 0, -200, 200);
--- Options('RefreshRate', 'Refresh Rate (ms)', 1, 1, #Drawing.Fonts);
 Options('MenuKey', 'Menu Key', Enum.KeyCode.F4, 1);
 Options('ToggleKey', 'Toggle Key', Enum.KeyCode.F3, 1);
+Options('ChangeColors', SENTINEL_LOADED and 'Sentinel Unsupported' or 'Change Colors', function()
+	if SENTINEL_LOADED then return end
+
+	SubMenu:Show(GetMouseLocation(), 'Unnamed Colors', {
+		{
+			Type = 'Color'; Text = 'Team Color'; Color = TeamColor;
+
+			Function = function(Circ, Position)
+				if tick() - ColorPicker.LastGenerated < 1 then return; end
+
+				if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose() end
+				local ColorPicker = ColorPicker.new(Position - V2New(-10, 50));
+				CurrentColorPicker = ColorPicker;
+				shared.CurrentColorPicker = CurrentColorPicker;
+				ColorPicker.ColorChanged:Connect(function(Color) Circ.Color = Color TeamColor = Color Options.TeamColor = Color end);
+			end
+		};
+		{
+			Type = 'Color'; Text = 'Enemy Color'; Color = EnemyColor;
+
+			Function = function(Circ, Position)
+				if tick() - ColorPicker.LastGenerated < 1 then return; end
+
+				if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose() end
+				local ColorPicker = ColorPicker.new(Position - V2New(-10, 50));
+				CurrentColorPicker = ColorPicker;
+				shared.CurrentColorPicker = CurrentColorPicker;
+				ColorPicker.ColorChanged:Connect(function(Color) Circ.Color = Color EnemyColor = Color Options.EnemyColor = Color end);
+			end
+		};
+		{
+			Type = 'Button'; Text = 'Reset Colors';
+
+			Function = function()
+				EnemyColor = Color3.new(1, 0, 0);
+				TeamColor = Color3.new(0, 1, 0);
+
+				local C1 = Menu:GetInstance'Sub-ColorPreview.1'; if C1 then C1.Color = TeamColor end
+				local C2 = Menu:GetInstance'Sub-ColorPreview.2'; if C2 then C2.Color = EnemyColor end
+			end
+		};
+		{
+			Type = 'Button'; Text = 'Rainbow Mode';
+
+			Function = function()
+				Rainbow = not Rainbow;
+			end
+		};
+	});
+end, 2);
 Options('ResetSettings', 'Reset Settings', function()
 	for i, v in pairs(Options) do
 		if Options[i] ~= nil and Options[i].Value ~= nil and Options[i].Text ~= nil and (typeof(Options[i].Value) == 'boolean' or typeof(Options[i].Value) == 'number') then
 			Options[i](Options[i].DefaultValue);
 		end
 	end
-end, 4);
-Options('LoadSettings', 'Load Settings', Load, 3);
+end, 5);
+Options('LoadSettings', 'Load Settings', Load, 4);
 Options('SaveSettings', 'Save Settings', function()
+	if typeof(Options.TeamColor) == 'Color3' then Options.TeamColor = { R = Options.TeamColor.R; G = Options.TeamColor.G; B = Options.TeamColor.B } end
+	if typeof(Options.EnemyColor) == 'Color3' then Options.EnemyColor = { R = Options.EnemyColor.R; G = Options.EnemyColor.G; B = Options.EnemyColor.B } end
+
 	writefile(OptionsFile, HttpService:JSONEncode(Options));
-end, 2);
+end, 3);
 
 Load();
 
@@ -527,7 +597,7 @@ function LineBox:Create(Properties)
 	}, Properties);
 
 	if syn then
-		Box['Quad']				= NewDrawing'Quad'(Properties);
+		Box['Quad']			= NewDrawing'Quad'(Properties);
 	else
 		Box['TopLeft']		= NewDrawing'Line'(Properties);
 		Box['TopRight']		= NewDrawing'Line'(Properties);
@@ -625,30 +695,506 @@ function LineBox:Create(Properties)
 	return Box;
 end
 
-function CreateMenu(NewPosition) -- Create Menu
-	local function FromHex(HEX)
-		HEX = HEX:gsub('#', '');
-		return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
+local Colors = {
+	White = FromHex'ffffff';
+	Primary = {
+		Main	= FromHex'424242';
+		Light	= FromHex'6d6d6d';
+		Dark	= FromHex'1b1b1b';
+	};
+	Secondary = {
+		Main	= FromHex'e0e0e0';
+		Light	= FromHex'ffffff';
+		Dark	= FromHex'aeaeae';
+	};
+};
+
+function Connections:Listen(Connection, Function)
+    local NewConnection = Connection:Connect(Function);
+    table.insert(self.Active, NewConnection);
+    return NewConnection;
+end
+
+function Connections:DisconnectAll()
+    for Index, Connection in pairs(self.Active) do
+        if Connection.Connected then
+            Connection:Disconnect();
+        end
+    end
+    
+    self.Active = {};
+end
+
+function Signal.new()
+	local self = setmetatable({ _BindableEvent = Instance.new'BindableEvent' }, Signal);
+    
+	return self;
+end
+
+function Signal:Connect(Callback)
+    assert(typeof(Callback) == 'function', 'function expected; got ' .. typeof(Callback));
+
+	return self._BindableEvent.Event:Connect(function(...) Callback(...) end);
+end
+
+function Signal:Fire(...)
+    self._BindableEvent:Fire(...);
+end
+
+function Signal:Wait()
+    local Arguments = self._BindableEvent:Wait();
+
+    return Arguments;
+end
+
+function Signal:Disconnect()
+    if self._BindableEvent then
+        self._BindableEvent:Destroy();
+    end
+end
+
+local function GetMouseLocation()
+	return UserInputService:GetMouseLocation();
+end
+
+local function IsMouseOverDrawing(Drawing, MousePosition)
+	local TopLeft = Drawing.Position;
+	local BottomRight = Drawing.Position + Drawing.Size;
+    local MousePosition = MousePosition or GetMouseLocation();
+    
+    return MousePosition.X > TopLeft.X and MousePosition.Y > TopLeft.Y and MousePosition.X < BottomRight.X and MousePosition.Y < BottomRight.Y;
+end
+
+local ImageCache = {};
+
+local function SetImage(Drawing, Url)
+	local Data = IsSynapse and game:HttpGet(Url) or Url;
+
+	Drawing[IsSynapse and 'Data' or 'Uri'] = ImageCache[Url] or Data;
+	ImageCache[Url] = Data;
+    
+    if not IsSynapse then repeat wait() until Drawing.Loaded; end
+end
+
+-- oh god unnamed esp needs an entire rewrite, someone make a better one pls im too lazy
+-- btw the color picker was made seperately so it doesnt fit with the code of unnamed esp
+
+local function CreateDrawingsTable()
+    local Drawings = { __Objects = {} };
+    local Metatable = {};
+
+    function Metatable.__index(self, Index)
+        local Object = rawget(self.__Objects, Index);
+        
+        if not Object or (IsSynapse and not Object.__SELF.__OBJECT_EXISTS) then
+            local Type = Index:sub(1, Index:find'-' - 1);
+
+            Success, Object = pcall(Drawing.new, Type);
+
+            if not Object or not Success then return function() end; end
+
+            self.__Objects[Index] = setmetatable({ __SELF = Object; Type = Type }, {
+                __call = function(self, Properties)
+                    local Object = rawget(self, '__SELF'); if IsSynapse and not Object.__OBJECT_EXISTS then return false, 'render object destroyed'; end
+
+                    if Properties == false then
+                        Object.Visible = false;
+                        Object.Transparency = 0;
+                        Object:Remove();
+                        
+                        return true;
+                    end
+                    
+                    if typeof(Properties) == 'table' then
+                        for Property, Value in pairs(Properties) do
+                            local CanSet = true;
+
+                            if self.Type == 'Image' and not IsSynapse and Property == 'Size' and typeof(Value) == 'Vector2' then
+                                CanSet = false;
+
+                                spawn(function()
+                                    repeat wait() until Object.Loaded;
+                                    if not self.DefaultSize then rawset(self, 'DefaultSize', Object.Size) end
+
+                                    Property = 'ScaleFactor';
+                                    Value = Value.X / self.DefaultSize.X;
+
+                                    Object[Property] = Value
+                                end)
+                            end
+                            
+                            if CanSet then Object[Property] = Value end
+                        end
+                    end
+
+                    return Object;
+                end
+            });
+
+            Object.Visible = true;
+            Object.Transparency = 1; -- Transparency is really Opacity with drawing api (1 being visible, 0 being invisible)
+            
+            if Type == 'Text' then
+                if Drawing.Fonts then Object.Font = Drawing.Fonts.Monospace end
+                Object.Size = 20;
+                Object.Color = Color3.new(1, 1, 1);
+                Object.Center = true;
+                Object.Outline = true;
+            elseif Type == 'Square' or Type == 'Rectangle' then
+                Object.Thickness = 2;
+                Object.Filled = false;
+            end
+
+            return self.__Objects[Index];
+        end
+
+        return Object;
+    end
+
+    function Metatable.__call(self, Delete, ...)
+        local Arguments = {Delete, ...};
+        
+        if Delete == false then
+            for Index, Drawing in pairs(rawget(self, '__Objects')) do
+                Drawing(false);
+            end
+        end
+    end
+
+    return setmetatable(Drawings, Metatable);
+end
+
+local Images = {};
+
+spawn(function()
+	Images.Ring = 'https://i.imgur.com/q4qx26f.png';
+	Images.Overlay = 'https://i.imgur.com/gOCxbsR.png';
+end)
+
+function ColorPicker.new(Position, Size, Color)
+	ColorPicker.LastGenerated = tick();
+	ColorPicker.Loading = true;
+
+    local Picker = { Color = Color or Color3.new(1, 1, 1); HSV = { H = 0, S = 1, V = 1 } };
+    local Drawings = CreateDrawingsTable();
+    local Position = Position or V2New();
+    local Size = Size or 150;
+    local Padding = { 10, 10, 10, 10 };
+    
+    Picker.ColorChanged = Signal.new();
+
+    local Background = Drawings['Square-Background'] {
+        Color = Color3.fromRGB(33, 33, 33);
+		Filled = false;
+		Visible = false;
+        Position = Position - V2New(Padding[4], Padding[1]);
+        Size = V2New(Size, Size) + V2New(Padding[4] + Padding[2], Padding[1] + Padding[3]);
+    };
+    local ColorPreview = Drawings['Circle-Preview'] {
+        Position = Position + (V2New(Size, Size) / 2);
+        Radius = Size / 2 - 8;
+        Filled = true;
+        Thickness = 0;
+        NumSides = 20;
+        Color = Color3.new(1, 0, 0);
+    };
+    local Main = Drawings['Image-Main'] {
+        Position = Position;
+        Size = V2New(Size, Size);
+    }; SetImage(Main, Images.Ring);
+    local Preview = Drawings['Square-Preview'] {
+        Position = Main.Position + (Main.Size / 4.5);
+        Size = Main.Size / 1.75;
+        Color = Color3.new(1, 0, 0);
+        Filled = true;
+        Thickness = 0;
+    };
+    local Overlay = Drawings['Image-Overlay'] {
+        Position = Preview.Position;
+        Size = Preview.Size;
+        Transparency = 1;
+    }; SetImage(Overlay, Images.Overlay);
+    local CursorOutline = Drawings['Circle-CursorOutline'] {
+        Radius = 4;
+        Thickness = 2;
+        Filled = false;
+        Color = Color3.new(0.2, 0.2, 0.2);
+        Position = V2New(Main.Position.X + Main.Size.X - 10, Main.Position.Y + (Main.Size.Y / 2));
+    };
+    local Cursor = Drawings['Circle-Cursor'] {
+        Radius = 3;
+        Transparency = 1;
+        Filled = true;
+        Color = Color3.new(1, 1, 1);
+        Position = CursorOutline.Position;
+    };
+    local CursorOutline = Drawings['Circle-CursorOutlineSquare'] {
+        Radius = 4;
+        Thickness = 2;
+        Filled = false;
+        Color = Color3.new(0.2, 0.2, 0.2);
+        Position = V2New(Preview.Position.X + Preview.Size.X - 2, Preview.Position.Y + 2);
+    };
+    Drawings['Circle-CursorSquare'] {
+        Radius = 3;
+        Transparency = 1;
+        Filled = true;
+        Color = Color3.new(1, 1, 1);
+        Position = CursorOutline.Position;
+    };
+    
+    function Picker:UpdatePosition(Input)
+        local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
+
+        if self.MouseHeld then
+            if self.Item == 'Ring' then
+                local Main = self.Drawings['Image-Main'] ();
+                local Preview = self.Drawings['Square-Preview'] ();
+                local Bounds = Main.Size / 2;
+                local Center = Main.Position + Bounds;
+                local Relative = MousePosition - Center;
+                local Direction = Relative.unit;
+                local Position = Center + Direction * Main.Size.X / 2.15;
+                local H = (math.atan2(Position.Y - Center.Y, Position.X - Center.X)) * 60;
+                if H < 0 then H = 360 + H; end
+                H = H / 360;
+                self.HSV.H = H;
+                local EndColor = Color3.fromHSV(H, self.HSV.S, self.HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
+                local Pointer = self.Drawings['Circle-Cursor'] { Position = Position };
+                self.Drawings['Circle-CursorOutline'] { Position = Pointer.Position };
+                Bounds = Bounds * 2;
+                Preview.Color = Color3.fromHSV(H, 1, 1);
+                self.Color = EndColor;
+                self.Drawings['Circle-Preview'] { Color = EndColor };
+            elseif self.Item == 'HL' then
+                local Preview = self.Drawings['Square-Preview'] ();
+                local HSV = self.HSV;
+                local Position = V2New(math.clamp(MousePosition.X, Preview.Position.X, Preview.Position.X + Preview.Size.X), math.clamp(MousePosition.Y, Preview.Position.Y, Preview.Position.Y + Preview.Size.Y));
+                HSV.S = (Position.X - Preview.Position.X) / Preview.Size.X;
+                HSV.V = 1 - (Position.Y - Preview.Position.Y) / Preview.Size.Y;
+                local EndColor = Color3.fromHSV(HSV.H, HSV.S, HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
+                self.Color = EndColor;
+                self.Drawings['Circle-Preview'] { Color = EndColor };
+                local Pointer = self.Drawings['Circle-CursorSquare'] { Position = Position };
+                self.Drawings['Circle-CursorOutlineSquare'] { Position = Pointer.Position };
+            end
+        end
+    end
+
+    function Picker:HandleInput(Input, P, Type)
+        if Type == 'Began' then
+            if Input.UserInputType.Name == 'MouseButton1' then
+                local Main = self.Drawings['Image-Main'] ();
+                local SquareSV = self.Drawings['Square-Preview'] ();
+                local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
+                self.MouseHeld = true;
+                local Bounds = Main.Size / 2;
+                local Center = Main.Position + Bounds;
+                local R = (MousePosition - Center);
+        
+                if R.magnitude < Bounds.X and R.Magnitude > Bounds.X - 20 then
+                    self.Item = 'Ring';
+                end
+                
+                if MousePosition.X > SquareSV.Position.X and MousePosition.Y > SquareSV.Position.Y and MousePosition.X < SquareSV.Position.X + SquareSV.Size.X and MousePosition.Y < SquareSV.Position.Y + SquareSV.Size.Y then
+                    self.Item = 'HL';
+                end
+
+                self:UpdatePosition(Input, P);
+            end
+        elseif Type == 'Changed' then
+            if Input.UserInputType.Name == 'MouseMovement' then
+                self:UpdatePosition(Input, P);
+            end
+        elseif Type == 'Ended' then
+            self.Item = nil;
+        end
+	end
+	
+	function Picker:Dispose()
+		self.Drawings(false);
+		self.UpdatePosition = nil;
+		self.HandleInput = nil;
+		Connections:DisconnectAll(); -- scuffed tbh
 	end
 
-	local Colors = {
-		Primary = {
-			Main	= FromHex'424242';
-			Light	= FromHex'6d6d6d';
-			Dark	= FromHex'1b1b1b';
-		};
-		Secondary = {
-			Main	= FromHex'e0e0e0';
-			Light	= FromHex'ffffff';
-			Dark	= FromHex'aeaeae';
-		};
-	};
+	Connections:Listen(UserInputService.InputBegan, function(Input, Process)
+		Picker:HandleInput(Input, Process, 'Began');
+	end);
+	Connections:Listen(UserInputService.InputChanged, function(Input, Process)
+		if Input.UserInputType.Name == 'MouseMovement' then
+			local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
+			local Cursor = Picker.Drawings['Triangle-Cursor'] {
+				Filled = true;
+				Color = Color3.new(0.9, 0.9, 0.9);
+				PointA = MousePosition + V2New(0, 0);
+				PointB = MousePosition + V2New(12, 14);
+				PointC = MousePosition + V2New(0, 18);
+				Thickness = 0;
+			};
+		end
+		Picker:HandleInput(Input, Process, 'Changed');
+	end);
+	Connections:Listen(UserInputService.InputEnded, function(Input, Process)
+		Picker:HandleInput(Input, Process, 'Ended');
+	
+		if Input.UserInputType.Name == 'MouseButton1' then
+			Picker.MouseHeld = false;
+		end
+	end);
 
+	ColorPicker.Loading = false;
+
+    Picker.Drawings = Drawings;
+    return Picker;
+end
+
+function SubMenu:Show(Position, Title, Options)
+	self.Open = true;
+
+	local Visible = true;
+	local BasePosition = Position;
+	local BaseSize = V2New(200, 140);
+	local End = BasePosition + BaseSize;
+
+	self.Bounds = { BasePosition.X, BasePosition.Y, End.X, End.Y };
+
+	delay(.025, function()
+		if not self.Open then return; end
+
+		Menu:AddMenuInstance('Sub-Main', 'Square', {
+			Size		= BaseSize;
+			Position	= BasePosition;
+			Filled		= false;
+			Color		= Colors.Primary.Main;
+			Thickness	= 3;
+			Visible		= Visible;
+		});
+	end);
+	Menu:AddMenuInstance('Sub-TopBar', 'Square', {
+		Position	= BasePosition;
+		Size		= V2New(BaseSize.X, 10);
+		Color		= Colors.Primary.Dark;
+		Filled		= true;
+		Visible		= Visible;
+	});
+	Menu:AddMenuInstance('Sub-TopBarTwo', 'Square', {
+		Position 	= BasePosition + V2New(0, 10);
+		Size		= V2New(BaseSize.X, 20);
+		Color		= Colors.Primary.Main;
+		Filled		= true;
+		Visible		= Visible;
+	});
+	Menu:AddMenuInstance('Sub-TopBarText', 'Text', {
+		Size 		= 20;
+		Position	= shared.MenuDrawingData.Instances['Sub-TopBarTwo'].Position + V2New(15, -3);
+		Text		= Title or '';
+		Color		= Colors.Secondary.Light;
+		Visible		= Visible;
+	});
+	Menu:AddMenuInstance('Sub-Filling', 'Square', {
+		Size		= BaseSize - V2New(0, 30);
+		Position	= BasePosition + V2New(0, 30);
+		Filled		= true;
+		Color		= Colors.Secondary.Main;
+		Transparency= .75;
+		Visible		= Visible;
+	});
+
+	if Options then
+		for Index, Option in pairs(Options) do -- currently only supports color and button(but color is a button so), planning on fully rewriting or something
+			local function GetName(Name) return ('Sub-%s.%d'):format(Name, Index) end
+			local Position = shared.MenuDrawingData.Instances['Sub-Filling'].Position + V2New(20, Index * 25 - 10);
+			-- local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(30, v.Index * 25 - 10);
+
+			if Option.Type == 'Color' then
+				local ColorPreview = Menu:AddMenuInstance(GetName'ColorPreview', 'Circle', {
+					Position = Position;
+					Color = Option.Color;
+					Radius = IsSynapse and 10 or 10;
+					NumSides = 10;
+					Filled = true;
+					Visible = true;
+				});
+				local Text = Menu:AddMenuInstance(GetName'Text', 'Text', {
+					Text = Option.Text;
+					Position = ColorPreview.Position + V2New(15, -8);
+					Size = 16;
+					Color = Colors.Primary.Dark;
+					Visible = true;
+				});
+				UIButtons[#UIButtons + 1] = {
+					FromSubMenu = true;
+					Option = function() return Option.Function(ColorPreview, BasePosition + V2New(BaseSize.X, 0)) end;
+					Instance = Menu:AddMenuInstance(Format('%s_Hitbox', GetName'Button'), 'Square', {
+						Position	= Position - V2New(20, 12);
+						Size		= V2New(BaseSize.X, 25);
+						Visible		= false;
+					});
+				};
+			elseif Option.Type == 'Button' then
+				UIButtons[#UIButtons + 1] = {
+					FromSubMenu = true;
+					Option = Option.Function;
+					Instance = Menu:AddMenuInstance(Format('%s_Hitbox', GetName'Button'), 'Square', {
+						Size		= V2New(BaseSize.X, 20) - V2New(20, 0);
+						Visible		= true;
+						Transparency= .5;
+						Position	= Position - V2New(10, 10);
+						Color		= Colors.Secondary.Light;
+						Filled		= true;
+					});
+				};
+				local Text		= Menu:AddMenuInstance(Format('%s_Text', GetName'Text'), 'Text', {
+					Text		= Option.Text;
+					Size		= 18;
+					Position	= Position + V2New(5, -10);
+					Visible		= true;
+					Color		= Colors.Primary.Dark;
+				});
+			end
+		end
+	end
+end
+
+function SubMenu:Hide()
+	self.Open = false;
+
+	for i, v in pairs(shared.MenuDrawingData.Instances) do
+		if i:sub(1, 3) == 'Sub' then
+			v.Visible = false;
+
+			if i:sub(4, 4) == ':' then -- ';' = Temporary so remove
+				v:Remove();
+				shared.MenuDrawingData.Instance[i] = nil;
+			end
+		end
+	end
+
+	for i, Button in pairs(UIButtons) do
+		if Button.FromSubMenu then
+			UIButtons[i] = nil;
+		end
+	end
+
+	spawn(function() -- stupid bug happens if i dont use this
+		for i = 1, 10 do
+			if shared.CurrentColorPicker then -- dont know why 'CurrentColorPicker' isnt a variable in this
+				shared.CurrentColorPicker:Dispose();
+			end
+			wait(0.1);
+		end
+	end)
+
+	CurrentColorPicker = nil;
+end
+
+function CreateMenu(NewPosition) -- Create Menu
 	MenuLoaded = false;
 	UIButtons  = {};
 	Sliders	   = {};
 
-	local BaseSize = V2New(300, 665);
+	local BaseSize = V2New(300, 625);
 	local BasePosition = NewPosition or V2New(Camera.ViewportSize.X / 8 - (BaseSize.X / 2), Camera.ViewportSize.Y / 2 - (BaseSize.Y / 2));
 
 	BasePosition = V2New(math.clamp(BasePosition.X, 0, Camera.ViewportSize.X), math.clamp(BasePosition.Y, 0, Camera.ViewportSize.Y));
@@ -758,49 +1304,68 @@ function CreateMenu(NewPosition) -- Create Menu
 			local BaseSize		= V2New(BaseSize.X, 30);
 			local BasePosition	= shared.MenuDrawingData.Instances.Filling.Position + V2New(0, CPos - 10);
 
+			local Line			= Menu:AddMenuInstance(Format('%s_SliderLine', v.Name), 'Square', {
+				Transparency	= 1;
+				Color			= Colors.Secondary.Light;
+				-- Thickness		= 3;
+				Filled			= true;
+				Visible			= true;
+				Position 		= BasePosition + V2New(15, -5);
+				Size 			= BaseSize - V2New(30, 10);
+				Transparency	= 0.5;
+			});
+			local Slider		= Menu:AddMenuInstance(Format('%s_Slider', v.Name), 'Square', {
+				Visible			= true;
+				Filled			= true;
+				Color			= Colors.Primary.Dark;
+				Size			= V2New(5, Line.Size.Y);
+				Transparency	= 0.5;
+			});
 			local Text			= Menu:AddMenuInstance(Format('%s_Text', v.Name), 'Text', {
 				Text			= v.Text;
 				Size			= 20;
-				Position		= BasePosition + V2New(20, -10);
+				Center			= true;
+				Outline			= true;
 				Visible			= true;
-				Color			= Colors.Primary.Dark;
-			});
+				Color			= Colors.White;
+			}); Text.Position	= Line.Position + (Line.Size / 2) - V2New(0, Text.TextBounds.Y / 1.75);
 			local AMT			= Menu:AddMenuInstance(Format('%s_AmountText', v.Name), 'Text', {
 				Text			= tostring(v.Value);
 				Size			= 22;
-				Position		= BasePosition;
+				Center			= true;
+				Outline			= true;
 				Visible			= true;
-				Color			= Colors.Primary.Dark;
+				Color			= Colors.White;
+				Position		= Text.Position;
 			});
-			local Line			= Menu:AddMenuInstance(Format('%s_SliderLine', v.Name), 'Line', {
-				Transparency	= 1;
-				Color			= Colors.Primary.Dark;
-				Thickness		= 3;
-				Visible			= true;
-				From			= BasePosition + V2New(20, 20);
-				To				= BasePosition + V2New(BaseSize.X - 10, 20);
-			});
-			CPos = CPos + 10;
-			local Slider		= Menu:AddMenuInstance(Format('%s_Slider', v.Name), 'Circle', {
-				Visible			= true;
-				Filled			= true;
-				Radius			= 6;
-				Color			= Colors.Secondary.Dark;
-				Position		= BasePosition + V2New(35, 20);
-			})
 
 			local CSlider = {Slider = Slider; Line = Line; Min = v.AllArgs[4]; Max = v.AllArgs[5]; Option = v};
+			local Dummy = Instance.new'NumberValue';
+
+			Dummy:GetPropertyChangedSignal'Value':Connect(function()
+				Text.Transparency = Dummy.Value;
+				AMT.Transparency = 1 - Dummy.Value;
+			end);
+
+			Dummy.Value = 1;
+
+			function CSlider:ShowValue(Bool)
+				self.ShowingValue = Bool;
+
+				TweenService:Create(Dummy, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Value = Bool and 0 or 1 }):Play();
+			end
+
 			Sliders[#Sliders + 1] = CSlider;
 
 			-- local Percent = (v.Value / CSlider.Max) * 100;
 			-- local Size = math.abs(Line.From.X - Line.To.X);
 			-- local Value = Size * (Percent / 100); -- this shit's inaccurate but fuck it i'm not even gonna bother fixing it
 
-			Slider.Position = BasePosition + V2New(40, 20);
+			Slider.Position = Line.Position + V2New(35, 0);
 			
 			v.BaseSize = BaseSize;
 			v.BasePosition = BasePosition;
-			AMT.Position = BasePosition + V2New(BaseSize.X - AMT.TextBounds.X - 10, -10)
+			-- AMT.Position = BasePosition + V2New(BaseSize.X - AMT.TextBounds.X - 10, -10)
 		end
 	end)
 	local FirstItem = false;
@@ -897,7 +1462,28 @@ function CreateMenu(NewPosition) -- Create Menu
 end
 
 CreateMenu();
+delay(0.1, function()
+	SubMenu:Show(V2New()); -- Create the submenu
+	SubMenu:Hide();
+end);
 
+shared.UESP_InputChangedCon = UserInputService.InputChanged:connect(function(input)
+	if input.UserInputType.Name == 'MouseMovement' and Options.MenuOpen.Value then
+		for i, v in pairs(Sliders) do
+			local Values = {
+				v.Line.Position.X;
+				v.Line.Position.Y;
+				v.Line.Position.X + v.Line.Size.X;
+				v.Line.Position.Y + v.Line.Size.Y;
+			};
+			if MouseHoveringOver(Values) then
+				v:ShowValue(true);
+			else
+				if not MouseHeld then v:ShowValue(false); end
+			end
+		end
+	end
+end)
 shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 	if input.UserInputType.Name == 'MouseButton1' and Options.MenuOpen.Value then
 		MouseHeld = true;
@@ -914,10 +1500,14 @@ shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 		else
 			for i, v in pairs(Sliders) do
 				local Values = {
-					v.Line.From.X	- (v.Slider.Radius);
-					v.Line.From.Y	- (v.Slider.Radius);
-					v.Line.To.X		+ (v.Slider.Radius);
-					v.Line.To.Y		+ (v.Slider.Radius);
+					v.Line.Position.X;
+					v.Line.Position.Y;
+					v.Line.Position.X + v.Line.Size.X;
+					v.Line.Position.Y + v.Line.Size.Y;
+					-- v.Line.From.X	- (v.Slider.Radius);
+					-- v.Line.From.Y	- (v.Slider.Radius);
+					-- v.Line.To.X		+ (v.Slider.Radius);
+					-- v.Line.To.Y		+ (v.Slider.Radius);
 				};
 				if MouseHoveringOver(Values) then
 					DraggingWhat = v;
@@ -932,7 +1522,7 @@ shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 					TracerPosition.Y - 10;
 					TracerPosition.X + 10;
 					TracerPosition.Y + 10;
-				}
+				};
 				if MouseHoveringOver(Values) then
 					DragTracerPosition = true;
 				end
@@ -944,16 +1534,41 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 	if input.UserInputType.Name == 'MouseButton1' and Options.MenuOpen.Value then
 		MouseHeld = false;
 		DragTracerPosition = false;
-		for i, v in pairs(UIButtons) do
-			local Values = {
-				v.Instance.Position.X;
-				v.Instance.Position.Y;
-				v.Instance.Position.X + v.Instance.Size.X;
-				v.Instance.Position.Y + v.Instance.Size.Y;
-			};
-			if MouseHoveringOver(Values) then
-				v.Option();
-				break -- prevent clicking 2 options
+		local IgnoreOtherInput = false;
+
+		if SubMenu.Open and not MouseHoveringOver(SubMenu.Bounds) then
+			if CurrentColorPicker and IsMouseOverDrawing(CurrentColorPicker.Drawings['Square-Background']()) then IgnoreOtherInput = true; end
+			if not IgnoreOtherInput then SubMenu:Hide() end
+		end
+
+		if not IgnoreOtherInput then
+			for i, v in pairs(UIButtons) do
+				if SubMenu.Open and MouseHoveringOver(SubMenu.Bounds) and not v.FromSubMenu then continue end
+
+				local Values = {
+					v.Instance.Position.X;
+					v.Instance.Position.Y;
+					v.Instance.Position.X + v.Instance.Size.X;
+					v.Instance.Position.Y + v.Instance.Size.Y;
+				};
+				if MouseHoveringOver(Values) then
+					v.Option();
+					IgnoreOtherInput = true;
+					break -- prevent clicking 2 options
+				end
+			end
+			for i, v in pairs(Sliders) do
+				if IgnoreOtherInput then break end
+
+				local Values = {
+					v.Line.Position.X;
+					v.Line.Position.Y;
+					v.Line.Position.X + v.Line.Size.X;
+					v.Line.Position.Y + v.Line.Size.Y;
+				};
+				if not MouseHoveringOver(Values) then
+					v:ShowValue(false);
+				end
 			end
 		end
 	elseif input.UserInputType.Name == 'MouseButton2' and Options.MenuOpen.Value and not DragTracerPosition then
@@ -975,6 +1590,43 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 			Options.MenuOpen();
 		elseif input.KeyCode == Options.ToggleKey.Value then
 			Options.Enabled();
+		elseif input.KeyCode.Name == 'F1' and UserInputService:IsMouseButtonPressed(1) and shared.am_ic3 then -- hehe hiden spectate feature cuz why not
+			local HD, LPlayer = 0.95;
+
+			for i, Player in pairs(Players:GetPlayers()) do
+				local Character = Player.Character;
+
+				if Player ~= LocalPlayer and Player ~= Spectating and Character and Character:FindFirstChild'HumanoidRootPart' then
+					local Head = Character:FindFirstChild'Head';
+					local Humanoid = Character:FindFirstChildOfClass'Humanoid';
+					
+					if Head then
+						local Distance  = (Camera.CFrame.p - Head.Position).magnitude;
+						
+						if Distance > 2500 then continue; end
+
+						local Direction = -(Camera.CFrame.p - Mouse.Hit.p).unit;
+						local Relative  = Player.Character.Head.Position - Camera.CFrame.p;
+						local Unit      = Relative.unit;
+
+						local DP = Direction:Dot(Unit);
+
+						if DP > HD then
+							HD = DP;
+							LPlayer = Player;
+						end
+					end
+				end
+			end
+			
+			if LPlayer and LPlayer ~= Spectating then
+				Camera.CameraSubject = LPlayer.Character.Head;
+				Spectating = LPlayer;
+			else
+				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass'Humanoid' then
+					Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass'Humanoid';
+				end
+			end
 		end
 	end
 end)
@@ -1040,7 +1692,7 @@ end
 local CustomTeam = CustomTeams[game.PlaceId];
 
 if CustomTeam ~= nil then
-	warn(ypcall(CustomTeam.Initialize));
+	ypcall(CustomTeam.Initialize);
 	CheckTeam = CustomTeam.CheckTeam;
 end
 
@@ -1099,7 +1751,6 @@ function UpdatePlayerData()
 		LastRefresh = tick();
 		if CustomESP and Options.Enabled.Value then
 			local a, b = pcall(CustomESP);
-			-- print(a, b);
 		end
 		for i, v in pairs(RenderList.Instances) do
 			if v.Instance ~= nil and v.Instance.Parent ~= nil and v.Instance:IsA'BasePart' then
@@ -1143,7 +1794,7 @@ function UpdatePlayerData()
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
-						Tracer.Transparency = math.clamp(Distance / 200, 0.3, 0.8);
+						Tracer.Transparency = math.clamp(Distance / 200, 0.45, 0.8);
 						Tracer.Visible	= true;
 						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
@@ -1154,7 +1805,6 @@ function UpdatePlayerData()
 
 					if ScreenPosition.Z > 0 then
 						local ScreenPositionUpper = ScreenPosition;
-						-- WorldToViewport((v.Instance.CFrame * CFrame.new(0, v.Instance.Size.Y, 0)).p);
 						
 						if Options.ShowName.Value then
 							LocalPlayer.NameDisplayDistance = 0;
@@ -1245,10 +1895,11 @@ function UpdatePlayerData()
 				local Humanoid = v.Character:FindFirstChildOfClass'Humanoid';
 				local Head = v.Character:FindFirstChild'Head';
 				local HumanoidRootPart = v.Character:FindFirstChild'HumanoidRootPart';
-				
-				if v.Character ~= nil and Head and HumanoidRootPart then
-					local ScreenPosition, Vis 	= WorldToViewport(Head.Position);
-					local Color = Options.Rainbow.Value and Color3.fromHSV(tick() * 128 % 255/255, 1, 1) or (CheckTeam(v) and Green or Red); Color = Options.ShowTeamColor.Value and v.TeamColor.Color or Color;
+				local Dead = Humanoid and Humanoid:GetState().Name == 'Dead';
+
+				if v.Character ~= nil and Head and HumanoidRootPart and not Dead then
+					local ScreenPosition, Vis = WorldToViewport(Head.Position);
+					local Color = Rainbow and Color3.fromHSV(tick() * 128 % 255/255, 1, 1) or (CheckTeam(v) and TeamColor or EnemyColor); Color = Options.ShowTeamColor.Value and v.TeamColor.Color or Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(Head.Position);
 					
 					if ScreenPosition.Z < 0 then
@@ -1264,8 +1915,7 @@ function UpdatePlayerData()
 						end
 
 						Tracer.Visible	= true;
-						-- Tracer.Transparency = 0.6;
-						Tracer.Transparency = math.clamp(1 - (Distance / 200), 0.15, 0.75);
+						Tracer.Transparency = math.clamp(1 - (Distance / 200), 0.25, 0.75);
 						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
@@ -1308,7 +1958,6 @@ function UpdatePlayerData()
 							end
 							if Options.ShowHealth.Value and Humanoid then
 								Str = Str .. Format('[%d/%d] [%s%%]', Humanoid.Health, Humanoid.MaxHealth, math.floor(Humanoid.Health / Humanoid.MaxHealth * 100));
-								-- Str = Str .. Format('[%d/%d] [%s%%]', Humanoid.Health, Humanoid.MaxHealth, math.floor(Humanoid.Health / Humanoid.MaxHealth * 100));
 							end
 
 							DistanceTag.Text = Str;
@@ -1336,17 +1985,23 @@ function UpdatePlayerData()
 					else
 						NameTag.Visible			= false;
 						DistanceTag.Visible		= false;
-						-- Tracer.Visible			= false;
 						HeadDot.Visible			= false;
-
+						
 						Box:SetVisible(false);
 					end
+				else
+					NameTag.Visible			= false;
+					DistanceTag.Visible		= false;
+					HeadDot.Visible			= false;
+					Tracer.Visible			= false;
+					
+					Box:SetVisible(false);
 				end
 			else
 				NameTag.Visible			= false;
 				DistanceTag.Visible		= false;
-				Tracer.Visible			= false;
 				HeadDot.Visible			= false;
+				Tracer.Visible			= false;
 
 				Box:SetVisible(false);
 			end
@@ -1418,9 +2073,9 @@ function Update()
 			MainInstance.Position.Y + MainInstance.Size.Y;
 		};
 		
-		if MainInstance and MouseHoveringOver(Values) then
+		if MainInstance and (MouseHoveringOver(Values) or (SubMenu.Open and MouseHoveringOver(SubMenu.Bounds))) then
 			Debounce.CursorVis = true;
-			-- GUIService:SetMenuIsOpen(true);
+			
 			Menu:UpdateMenuInstance'Cursor1'{
 				Visible	= true;
 				From	= V2New(MLocation.x, MLocation.y);
@@ -1439,7 +2094,7 @@ function Update()
 		else
 			if Debounce.CursorVis then
 				Debounce.CursorVis = false;
-				-- GUIService:SetMenuIsOpen(false);
+				
 				Menu:UpdateMenuInstance'Cursor1'{Visible = false};
 				Menu:UpdateMenuInstance'Cursor2'{Visible = false};
 				Menu:UpdateMenuInstance'Cursor3'{Visible = false};
@@ -1449,8 +2104,8 @@ function Update()
 			local MousePos = GetMouseLocation();
 
 			if Dragging then
-				DraggingWhat.Slider.Position = V2New(math.clamp(MLocation.X, DraggingWhat.Line.From.X, DraggingWhat.Line.To.X), DraggingWhat.Slider.Position.Y);
-				local Percent	= (DraggingWhat.Slider.Position.X - DraggingWhat.Line.From.X) / ((DraggingWhat.Line.To.X - DraggingWhat.Line.From.X));
+				DraggingWhat.Slider.Position = V2New(math.clamp(MLocation.X - DraggingWhat.Slider.Size.X / 2, DraggingWhat.Line.Position.X, DraggingWhat.Line.Position.X + DraggingWhat.Line.Size.X - DraggingWhat.Slider.Size.X), DraggingWhat.Slider.Position.Y);
+				local Percent	= (DraggingWhat.Slider.Position.X - DraggingWhat.Line.Position.X) / ((DraggingWhat.Line.Position.X + DraggingWhat.Line.Size.X - DraggingWhat.Line.Position.X) - DraggingWhat.Slider.Size.X);
 				local Value		= CalculateValue(DraggingWhat.Min, DraggingWhat.Max, Percent);
 				DraggingWhat.Option(Value);
 			elseif DraggingUI then
