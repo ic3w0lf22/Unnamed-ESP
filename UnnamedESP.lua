@@ -2,7 +2,7 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
-local UserInputService		= game:GetService'UserInputService';
+local UserInputService	= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
 local TweenService		= game:GetService'TweenService';
@@ -10,12 +10,12 @@ local RunService		= game:GetService'RunService';
 local Players			= game:GetService'Players';
 local LocalPlayer		= Players.LocalPlayer;
 local Camera			= workspace.CurrentCamera;
-local Mouse			= LocalPlayer:GetMouse();
-local V2New			= Vector2.new;
-local V3New			= Vector3.new;
-local WTVP			= Camera.WorldToViewportPoint;
-local WorldToViewport		= function(...) return WTVP(Camera, ...) end;
-local Menu			= {};
+local Mouse				= LocalPlayer:GetMouse();
+local V2New				= Vector2.new;
+local V3New				= Vector3.new;
+local WTVP				= Camera.WorldToViewportPoint;
+local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
+local Menu				= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
 local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
@@ -37,8 +37,8 @@ local EnemyColor		= Color3.new(1, 0, 0);
 local TeamColor			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
-local TracerPosition		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
-local DragTracerPosition	= false;
+local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+local DragTracerPosition= false;
 local SubMenu 			= {};
 local IsSynapse 		= syn and not PROTOSMASHER_LOADED;
 local Connections 		= { Active = {} };
@@ -49,7 +49,7 @@ local Spectating;
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
-shared.MenuDrawingData		= shared.MenuDrawingData or { Instances = {} };
+shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
 shared.InstanceData		= shared.InstanceData or {};
 shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
@@ -416,23 +416,27 @@ local Options = setmetatable({}, {
 			AllArgs			= Arguments;
 			Index			= OIndex;
 		}, {
-			__call = function(t, v)
+			__call = function(t, v, force)
 				local self = t;
 
 				if typeof(t.Value) == 'function' then
 					t.Value();
 				elseif typeof(t.Value) == 'EnumItem' then
 					local BT = Menu:GetInstance(Format('%s_BindText', t.Name));
-					Binding = true;
-					local Val = 0
-					while Binding do
-						wait();
-						Val = (Val + 1) % 17;
-						BT.Text = Val <= 8 and '|' or '';
+					if not force then
+						Binding = true;
+						local Val = 0
+						while Binding do
+							wait();
+							Val = (Val + 1) % 17;
+							BT.Text = Val <= 8 and '|' or '';
+						end
 					end
-					t.Value = BindedKey;
-					BT.Text = tostring(t.Value):match'%w+%.%w+%.(.+)';
-					BT.Position = t.BasePosition + V2New(t.BaseSize.X - BT.TextBounds.X - 20, -10);
+					t.Value = force and v or BindedKey;
+					if BT and t.BasePosition and t.BaseSize then
+						BT.Text = tostring(t.Value):match'%w+%.%w+%.(.+)';
+						BT.Position = t.BasePosition + V2New(t.BaseSize.X - BT.TextBounds.X - 20, -10);
+					end
 				else
 					local NewValue = v;
 					if NewValue == nil then NewValue = not t.Value; end
@@ -470,12 +474,15 @@ function Load()
 
 			if Table.TeamColor then TeamColor = Color3.new(Table.TeamColor.R, Table.TeamColor.G, Table.TeamColor.B) end
 			if Table.EnemyColor then EnemyColor = Color3.new(Table.EnemyColor.R, Table.EnemyColor.G, Table.EnemyColor.B) end
+
+			if typeof(Table.MenuKey) == 'string' then Options.MenuKey(Enum.KeyCode[Table.MenuKey], true) end
+			if typeof(Table.ToggleKey) == 'string' then Options.ToggleKey(Enum.KeyCode[Table.ToggleKey], true) end
 		end
 	end
 end
 
 Options('Enabled', 'ESP Enabled', true);
-Options('ShowTeam', 'Show Team', false);
+Options('ShowTeam', 'Show Team', true);
 Options('ShowTeamColor', 'Show Team Color', false);
 Options('ShowName', 'Show Names', true);
 Options('ShowDistance', 'Show Distance', true);
@@ -545,22 +552,29 @@ Options('ChangeColors', SENTINEL_LOADED and 'Sentinel Unsupported' or 'Change Co
 end, 2);
 Options('ResetSettings', 'Reset Settings', function()
 	for i, v in pairs(Options) do
-		if Options[i] ~= nil and Options[i].Value ~= nil and Options[i].Text ~= nil and (typeof(Options[i].Value) == 'boolean' or typeof(Options[i].Value) == 'number') then
-			Options[i](Options[i].DefaultValue);
+		if Options[i] ~= nil and Options[i].Value ~= nil and Options[i].Text ~= nil and (typeof(Options[i].Value) == 'boolean' or typeof(Options[i].Value) == 'number' or typeof(Options[i].Value) == 'EnumItem') then
+			Options[i](Options[i].DefaultValue, true);
 		end
 	end
 end, 5);
 Options('LoadSettings', 'Load Settings', Load, 4);
 Options('SaveSettings', 'Save Settings', function()
-	if typeof(Options.TeamColor) == 'Color3' then Options.TeamColor = { R = Options.TeamColor.R; G = Options.TeamColor.G; B = Options.TeamColor.B } end
-	if typeof(Options.EnemyColor) == 'Color3' then Options.EnemyColor = { R = Options.EnemyColor.R; G = Options.EnemyColor.G; B = Options.EnemyColor.B } end
-	
-	-- Options.MenuKey
+	local COptions = {};
 
-	writefile(OptionsFile, HttpService:JSONEncode(Options));
+	for i, v in pairs(Options) do
+		COptions[i] = v;
+	end
+	
+	if typeof(COptions.TeamColor) == 'Color3' then COptions.TeamColor = { R = COptions.TeamColor.R; G = COptions.TeamColor.G; B = COptions.TeamColor.B } end
+	if typeof(COptions.EnemyColor) == 'Color3' then COptions.EnemyColor = { R = COptions.EnemyColor.R; G = COptions.EnemyColor.G; B = COptions.EnemyColor.B } end
+	
+	if typeof(COptions.MenuKey.Value) == 'EnumItem' then COptions.MenuKey = COptions.MenuKey.Value.Name end
+	if typeof(COptions.ToggleKey.Value) == 'EnumItem' then COptions.ToggleKey = COptions.ToggleKey.Value.Name end
+
+	writefile(OptionsFile, HttpService:JSONEncode(COptions));
 end, 3);
 
-Load();
+Load(1);
 
 Options('MenuOpen', nil, true);
 
@@ -1237,13 +1251,15 @@ function CreateMenu(NewPosition) -- Create Menu
 		Text		= 'Unnamed ESP';
 		Color		= Colors.Secondary.Light;
 		Visible		= true;
+		Outline 	= true;
 	});
 	Menu:AddMenuInstance('TopBarTextBR', 'Text', {
-		Size 		= 15;
+		Size 		= 18;
 		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(BaseSize.X - 65, 25);
 		Text		= 'by ic3w0lf';
-		Color		= Color3.fromRGB(108, 240, 64); -- testing
+		Color		= Colors.Secondary.Light;
 		Visible		= true;
+		Outline 	= true;
 	});
 	Menu:AddMenuInstance('Filling', 'Square', {
 		Size		= BaseSize - V2New(0, 60);
@@ -1288,7 +1304,8 @@ function CreateMenu(NewPosition) -- Create Menu
 				Size		= 20;
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
-				Color		= Colors.Primary.Dark;
+				Color		= Colors.Secondary.Light;
+				Outline		= true;
 			});
 		end
 	end)
@@ -1388,14 +1405,16 @@ function CreateMenu(NewPosition) -- Create Menu
 				Size		= 20;
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
-				Color		= Colors.Primary.Dark;
+				Color		= Colors.Secondary.Light;
+				Outline		= true;
 			});
 			local BindText	= Menu:AddMenuInstance(Format('%s_BindText', v.Name), 'Text', {
 				Text		= tostring(v.Value):match'%w+%.%w+%.(.+)';
 				Size		= 20;
 				Position	= BasePosition;
 				Visible		= true;
-				Color		= Colors.Primary.Dark;
+				Color		= Colors.Secondary.Light;
+				Outline		= true;
 			});
 
 			Options[i].BaseSize = BaseSize;
@@ -1424,7 +1443,8 @@ function CreateMenu(NewPosition) -- Create Menu
 				Size		= 20;
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
-				Color		= Colors.Primary.Dark;
+				Color		= Colors.Secondary.Light;
+				Outline		= true;
 			});
 
 			-- BindText.Position = BasePosition + V2New(BaseSize.X - BindText.TextBounds.X - 10, -10);
@@ -1615,8 +1635,8 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 				end
 			end
 			
-			if LPlayer and LPlayer ~= Spectating then
-				Camera.CameraSubject = Character.Head;
+			if LPlayer and LPlayer ~= Spectating and LCharacter then
+				Camera.CameraSubject = LCharacter.Head;
 				Spectating = LPlayer;
 			else
 				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass'Humanoid' then
