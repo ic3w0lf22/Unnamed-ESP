@@ -2,7 +2,7 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
-local UserInputService	= game:GetService'UserInputService';
+local UserInputService		= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
 local TweenService		= game:GetService'TweenService';
@@ -10,12 +10,12 @@ local RunService		= game:GetService'RunService';
 local Players			= game:GetService'Players';
 local LocalPlayer		= Players.LocalPlayer;
 local Camera			= workspace.CurrentCamera;
-local Mouse				= LocalPlayer:GetMouse();
-local V2New				= Vector2.new;
-local V3New				= Vector3.new;
-local WTVP				= Camera.WorldToViewportPoint;
-local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
-local Menu				= {};
+local Mouse			= LocalPlayer:GetMouse();
+local V2New			= Vector2.new;
+local V3New			= Vector3.new;
+local WTVP			= Camera.WorldToViewportPoint;
+local WorldToViewport		= function(...) return WTVP(Camera, ...) end;
+local Menu			= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
 local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
@@ -37,8 +37,8 @@ local EnemyColor		= Color3.new(1, 0, 0);
 local TeamColor			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
-local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
-local DragTracerPosition= false;
+local TracerPosition		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+local DragTracerPosition	= false;
 local SubMenu 			= {};
 local IsSynapse 		= syn and not PROTOSMASHER_LOADED;
 local Connections 		= { Active = {} };
@@ -49,7 +49,7 @@ local Spectating;
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
-shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
+shared.MenuDrawingData		= shared.MenuDrawingData or { Instances = {} };
 shared.InstanceData		= shared.InstanceData or {};
 shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
@@ -1015,7 +1015,7 @@ function ColorPicker.new(Position, Size, Color)
             if Input.UserInputType.Name == 'MouseMovement' then
                 self:UpdatePosition(Input, P);
             end
-        elseif Type == 'Ended' then
+        elseif Type == 'Ended' and Input.UserInputType.Name == 'MouseButton1' then
             self.Item = nil;
         end
 	end
@@ -1046,7 +1046,7 @@ function ColorPicker.new(Position, Size, Color)
 	end);
 	Connections:Listen(UserInputService.InputEnded, function(Input, Process)
 		Picker:HandleInput(Input, Process, 'Ended');
-	
+		
 		if Input.UserInputType.Name == 'MouseButton1' then
 			Picker.MouseHeld = false;
 		end
@@ -1251,14 +1251,16 @@ function CreateMenu(NewPosition) -- Create Menu
 		Text		= 'Unnamed ESP';
 		Color		= Colors.Secondary.Light;
 		Visible		= true;
+		Transparency= 1; -- proto outline fix
 		Outline 	= true;
 	});
 	Menu:AddMenuInstance('TopBarTextBR', 'Text', {
 		Size 		= 18;
-		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(BaseSize.X - 65, 25);
+		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(BaseSize.X - 75, 25);
 		Text		= 'by ic3w0lf';
 		Color		= Colors.Secondary.Light;
 		Visible		= true;
+		Transparency= 1;
 		Outline 	= true;
 	});
 	Menu:AddMenuInstance('Filling', 'Square', {
@@ -1305,6 +1307,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Secondary.Light;
+				Transparency= 1;
 				Outline		= true;
 			});
 		end
@@ -1337,6 +1340,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Text			= v.Text;
 				Size			= 20;
 				Center			= true;
+				Transparency	= 1;
 				Outline			= true;
 				Visible			= true;
 				Color			= Colors.White;
@@ -1345,6 +1349,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Text			= tostring(v.Value);
 				Size			= 22;
 				Center			= true;
+				Transparency	= 1;
 				Outline			= true;
 				Visible			= true;
 				Color			= Colors.White;
@@ -1406,6 +1411,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Secondary.Light;
+				Transparency= 1;
 				Outline		= true;
 			});
 			local BindText	= Menu:AddMenuInstance(Format('%s_BindText', v.Name), 'Text', {
@@ -1414,6 +1420,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Position	= BasePosition;
 				Visible		= true;
 				Color		= Colors.Secondary.Light;
+				Transparency= 1;
 				Outline		= true;
 			});
 
@@ -1444,6 +1451,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Position	= BasePosition + V2New(20, -10);
 				Visible		= true;
 				Color		= Colors.Secondary.Light;
+				Transparency= 1;
 				Outline		= true;
 			});
 
