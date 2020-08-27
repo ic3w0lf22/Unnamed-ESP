@@ -2,7 +2,7 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
-local UserInputService	= game:GetService'UserInputService';
+local UserInputService		= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
 local TweenService		= game:GetService'TweenService';
@@ -10,12 +10,12 @@ local RunService		= game:GetService'RunService';
 local Players			= game:GetService'Players';
 local LocalPlayer		= Players.LocalPlayer;
 local Camera			= workspace.CurrentCamera;
-local Mouse				= LocalPlayer:GetMouse();
-local V2New				= Vector2.new;
-local V3New				= Vector3.new;
-local WTVP				= Camera.WorldToViewportPoint;
-local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
-local Menu				= {};
+local Mouse			= LocalPlayer:GetMouse();
+local V2New			= Vector2.new;
+local V3New			= Vector3.new;
+local WTVP			= Camera.WorldToViewportPoint;
+local WorldToViewport		= function(...) return WTVP(Camera, ...) end;
+local Menu			= {};
 local MouseHeld			= false;
 local LastRefresh		= 0;
 local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
@@ -37,18 +37,19 @@ local EnemyColor		= Color3.new(1, 0, 0);
 local TeamColor			= Color3.new(0, 1, 0);
 local MenuLoaded		= false;
 local ErrorLogging		= false;
-local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
-local DragTracerPosition= false;
+local TracerPosition		= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+local DragTracerPosition	= false;
 local SubMenu 			= {};
 local IsSynapse 		= syn and not PROTOSMASHER_LOADED;
 local Connections 		= { Active = {} };
 local Signal 			= {}; Signal.__index = Signal;
+local GetCharacter;
 local CurrentColorPicker;
 local Spectating;
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
-shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
+shared.MenuDrawingData		= shared.MenuDrawingData or { Instances = {} };
 shared.InstanceData		= shared.InstanceData or {};
 shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
@@ -144,6 +145,7 @@ end
 
 local CustomPlayerTag;
 local CustomESP;
+local CustomCharacter;
 
 local Modules = {
 	[292439477] = {
@@ -166,33 +168,14 @@ local Modules = {
 					else
 						Player.Character = nil;
 					end
-
-					-- if Player.Character == nil or not Player.Character:IsDescendantOf(workspace) then
-
-					-- end
 				end
 			end
 		end
 	};
 	[2950983942] = {
-		CustomESP = function()
-			if not shared.__FDH and (PROTOSMASHER_LOADED or syn) then
-				shared.__FDH = true;
-
-				local MT = getrawmetatable(game);
-				(setreadonly or make_writable)(MT, false);
-
-				shared.__FDOI = shared.__FDOI or MT.__index;
-
-				MT.__index = newcclosure(function(self, Index)
-					if (is_protosmasher_caller or syn_check_caller)() and typeof(Index) == 'string' and typeof(self) == 'Instance' and Index == 'Character' and self.ClassName == 'Player' then
-						if workspace:FindFirstChild'Players' then
-							return workspace.Players:FindFirstChild(self.Name);
-						end
-					end
-
-					return shared.__FDOI(self, Index);
-				end);
+		CustomCharacter = function(Player)
+			if workspace:FindFirstChild'Players' then
+				return workspace.Players:FindFirstChild(Player.Name);
 			end
 		end
 	};
@@ -240,18 +223,20 @@ local Modules = {
 
 				if not IsStringEmpty(Name) then Name = Name .. ']'; end
 
-				if Player.Character then
-					if Player.Character and Player.Character:FindFirstChild'Danger' then table.insert(Extra, 'D'); end
-					if Player.Character:FindFirstChild'ManaAbilities' and Player.Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
+				local Character = GetCharacter(Player);
 
-					if Player.Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Player.Character.Mana.Value)); end
-					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V'); end
-					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL'); end
-					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC'); end
-					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
-					if Player.Character:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
-					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
-						local FM = Player.Character.Head:FindFirstChild'FacialMarking';
+				if Character then
+					if Character and Character:FindFirstChild'Danger' then table.insert(Extra, 'D'); end
+					if Character:FindFirstChild'ManaAbilities' and Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
+
+					if Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Character.Mana.Value)); end
+					if Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V'); end
+					if Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL'); end
+					if Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC'); end
+					if Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Character:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
+					if Character:FindFirstChild'Head' and Character.Head:FindFirstChild'FacialMarking' then
+						local FM = Character.Head:FindFirstChild'FacialMarking';
 						if FM.Texture == 'http://www.roblox.com/asset/?id=4072968006' then
 							table.insert(Extra, 'HEALER');
 						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4072914434' then
@@ -297,20 +282,23 @@ local Modules = {
 				if Player.leaderstats:FindFirstChild'UberTitle' and Player.leaderstats.UberTitle.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.UberTitle.Value) then
 					Name = Name .. ', ' .. Player.leaderstats.UberTitle.Value;
 				end
+
 				if not IsStringEmpty(Name) then Name = Name .. ']'; end
 
-				if Player.Character then
-					if Player.Character and Player.Character:FindFirstChild'Danger' then table.insert(Extra, 'D'); end
-					if Player.Character:FindFirstChild'ManaAbilities' and Player.Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
+				local Character = GetCharacter(Player);
 
-					if Player.Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Player.Character.Mana.Value)); end
-					if Player.Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
-					if Player.Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
-					if Player.Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
+				if Character then
+					if Character and Character:FindFirstChild'Danger' then table.insert(Extra, 'D'); end
+					if Character:FindFirstChild'ManaAbilities' and Character.ManaAbilities:FindFirstChild'ManaSprint' then table.insert(Extra, 'D1'); end
+
+					if Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Character.Mana.Value)); end
+					if Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
+					if Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
+					if Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
 					
-					if Player.Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
-					if Player.Character:FindFirstChild'Head' and Player.Character.Head:FindFirstChild'FacialMarking' then
-						local FM = Player.Character.Head:FindFirstChild'FacialMarking';
+					if Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Character:FindFirstChild'Head' and Character.Head:FindFirstChild'FacialMarking' then
+						local FM = Character.Head:FindFirstChild'FacialMarking';
 						if FM.Texture == 'http://www.roblox.com/asset/?id=4072968006' then
 							table.insert(Extra, 'HEALER');
 						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4072914434' then
@@ -338,6 +326,11 @@ if Modules[game.PlaceId] ~= nil then
 	local Module = Modules[game.PlaceId];
 	CustomPlayerTag = Module.CustomPlayerTag or nil;
 	CustomESP = Module.CustomESP or nil;
+	CustomCharacter = Module.CustomCharacter or nil;
+end
+
+function GetCharacter(Player)
+	return Player.Character or (CustomCharacter and CustomCharacter(Player));
 end
 
 function GetMouseLocation()
@@ -561,6 +554,8 @@ Options('LoadSettings', 'Load Settings', Load, 4);
 Options('SaveSettings', 'Save Settings', function()
 	if typeof(Options.TeamColor) == 'Color3' then Options.TeamColor = { R = Options.TeamColor.R; G = Options.TeamColor.G; B = Options.TeamColor.B } end
 	if typeof(Options.EnemyColor) == 'Color3' then Options.EnemyColor = { R = Options.EnemyColor.R; G = Options.EnemyColor.G; B = Options.EnemyColor.B } end
+	
+	-- Options.MenuKey
 
 	writefile(OptionsFile, HttpService:JSONEncode(Options));
 end, 3);
@@ -1247,7 +1242,7 @@ function CreateMenu(NewPosition) -- Create Menu
 		Size 		= 15;
 		Position	= shared.MenuDrawingData.Instances.TopBarTwo.Position + V2New(BaseSize.X - 65, 25);
 		Text		= 'by ic3w0lf';
-		Color		= Colors.Secondary.Dark;
+		Color		= Color3.fromRGB(108, 240, 64); -- testing
 		Visible		= true;
 	});
 	Menu:AddMenuInstance('Filling', 'Square', {
@@ -1591,10 +1586,10 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 		elseif input.KeyCode == Options.ToggleKey.Value then
 			Options.Enabled();
 		elseif input.KeyCode.Name == 'F1' and UserInputService:IsMouseButtonPressed(1) and shared.am_ic3 then -- hehe hiden spectate feature cuz why not
-			local HD, LPlayer = 0.95;
+			local HD, LPlayer, LCharacter = 0.95;
 
 			for i, Player in pairs(Players:GetPlayers()) do
-				local Character = Player.Character;
+				local Character = GetCharacter(Player);
 
 				if Player ~= LocalPlayer and Player ~= Spectating and Character and Character:FindFirstChild'HumanoidRootPart' then
 					local Head = Character:FindFirstChild'Head';
@@ -1606,7 +1601,7 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 						if Distance > 2500 then continue; end
 
 						local Direction = -(Camera.CFrame.p - Mouse.Hit.p).unit;
-						local Relative  = Player.Character.Head.Position - Camera.CFrame.p;
+						local Relative  = Character.Head.Position - Camera.CFrame.p;
 						local Unit      = Relative.unit;
 
 						local DP = Direction:Dot(Unit);
@@ -1614,17 +1609,19 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 						if DP > HD then
 							HD = DP;
 							LPlayer = Player;
+							LCharacter = Character;
 						end
 					end
 				end
 			end
 			
 			if LPlayer and LPlayer ~= Spectating then
-				Camera.CameraSubject = LPlayer.Character.Head;
+				Camera.CameraSubject = Character.Head;
 				Spectating = LPlayer;
 			else
 				if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass'Humanoid' then
 					Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass'Humanoid';
+					Spectating = nil;
 				end
 			end
 		end
@@ -1655,16 +1652,19 @@ function CheckRay(Instance, Distance, Position, Unit)
 
 	if Distance > 999 then return false; end
 
-	if Instance:IsA'Player' and not Instance.Character then
-		return false;
-	elseif Instance:IsA'Player' and Instance.Character then
-		Model = Instance.Character
-	else
+	if Instance.ClassName == 'Player' then
+		Model = GetCharacter(Instance);
+	end
+
+	if not Model then
 		Model = Instance.Parent;
+
 		if Model.Parent == workspace then
 			Model = Instance;
 		end
 	end
+
+	if not Model then return false end
 
 	local _Ray = Ray.new(Position, Unit * Distance);
 	
@@ -1696,20 +1696,20 @@ if CustomTeam ~= nil then
 	CheckTeam = CustomTeam.CheckTeam;
 end
 
-function CheckPlayer(Player)
+function CheckPlayer(Player, Character)
 	if not Options.Enabled.Value then return false end
 
 	local Pass = true;
 	local Distance = 0;
 
-	if Player ~= LocalPlayer and Player.Character then
+	if Player ~= LocalPlayer and Character then
 		if not Options.ShowTeam.Value and CheckTeam(Player) then
 			Pass = false;
 		end
 
-		local Head = Player.Character:FindFirstChild'Head';
+		local Head = Character:FindFirstChild'Head';
 
-		if Pass and Player.Character and Head then
+		if Pass and Character and Head then
 			Distance = (Camera.CFrame.p - Head.Position).magnitude;
 			if Options.VisCheck.Value then
 				Pass = CheckRay(Player, Distance, Camera.CFrame.p, (Head.Position - Camera.CFrame.p).unit);
@@ -1889,15 +1889,16 @@ function UpdatePlayerData()
 			local HeadDot		= Data.Instances['HeadDot'];
 			local Box			= Data.Instances['Box'];
 
-			local Pass, Distance = CheckPlayer(v);
+			local Character = GetCharacter(v);
+			local Pass, Distance = CheckPlayer(v, Character);
 
-			if Pass and v.Character then
-				local Humanoid = v.Character:FindFirstChildOfClass'Humanoid';
-				local Head = v.Character:FindFirstChild'Head';
-				local HumanoidRootPart = v.Character:FindFirstChild'HumanoidRootPart';
+			if Pass and Character then
+				local Humanoid = Character:FindFirstChildOfClass'Humanoid';
+				local Head = Character:FindFirstChild'Head';
+				local HumanoidRootPart = Character:FindFirstChild'HumanoidRootPart';
 				local Dead = Humanoid and Humanoid:GetState().Name == 'Dead';
 
-				if v.Character ~= nil and Head and HumanoidRootPart and not Dead then
+				if Character ~= nil and Head and HumanoidRootPart and not Dead then
 					local ScreenPosition, Vis = WorldToViewport(Head.Position);
 					local Color = Rainbow and Color3.fromHSV(tick() * 128 % 255/255, 1, 1) or (CheckTeam(v) and TeamColor or EnemyColor); Color = Options.ShowTeamColor.Value and v.TeamColor.Color or Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(Head.Position);
