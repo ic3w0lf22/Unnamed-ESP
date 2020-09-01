@@ -356,7 +356,6 @@ local Modules = {
 };
 
 Modules[5208655184] = Modules[3016661674]; -- rogue gaia
-Modules[3541987450] = Modules[3016661674]; -- rogue khei
 
 if Modules[game.PlaceId] ~= nil then
 	local Module = Modules[game.PlaceId];
