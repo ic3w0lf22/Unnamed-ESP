@@ -135,6 +135,42 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return LocalTeam[Player.Name] and true or false;
 		end;
 	};
+	[3016661674] = {
+		CheckTeam = function(Player)
+			local leaderstats = LocalPlayer:FindFirstChild'leaderstats'
+			if leaderstats then
+				local LastName = leaderstats:FindFirstChild'LastName'
+				if LastName and #LastName.Value>1 then
+					local sleaderstats = Player:FindFirstChild'leaderstats'
+					if sleaderstats then
+						local sLastName = sleaderstats:FindFirstChild'LastName'
+						if sLastName and #sLastName.Value>1 then
+							return LastName.Value==sLastName.Value
+						end
+					end
+				end
+			end
+			return false
+		end;
+	};
+	[3541987450] = {
+		CheckTeam = function(Player)
+			local leaderstats = LocalPlayer:FindFirstChild'leaderstats'
+			if leaderstats then
+				local LastName = leaderstats:FindFirstChild'LastName'
+				if LastName and #LastName.Value>1 then
+					local sleaderstats = Player:FindFirstChild'leaderstats'
+					if sleaderstats then
+						local sLastName = sleaderstats:FindFirstChild'LastName'
+						if sLastName and #sLastName.Value>1 then
+							return LastName.Value==sLastName.Value
+						end
+					end
+				end
+			end
+			return false
+		end;
+	};
 }
 
 local RenderList = {Instances = {}};
@@ -1719,8 +1755,10 @@ end
 
 local CustomTeam = CustomTeams[game.PlaceId];
 
-if CustomTeam ~= nil then
-	ypcall(CustomTeam.Initialize);
+if CustomTeam then
+	if CustomTeam.Initialize then
+		ypcall(CustomTeam.Initialize);
+	end
 	CheckTeam = CustomTeam.CheckTeam;
 end
 
