@@ -89,6 +89,13 @@ local function FromHex(HEX)
 	return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
 end
 
+local function IsStringEmpty(String)
+	if type(String) == 'string' then
+		return String:match'^%s+$' ~= nil or #String == 0 or String == '' or false;
+	end
+	return false
+end
+
 local function Set(t, i, v)
 	t[i] = v;
 end
@@ -135,9 +142,23 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return LocalTeam[Player.Name] and true or false;
 		end;
 	};
-}
+	[3016661674] = {
+		CheckTeam = function(Player)
+			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
+			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
+			local PlayerStats = Player:FindFirstChild'leaderstats';
+			local PlayerLastName = PlayerStats and PlayerStats:FindFirstChild'LastName'; if not PlayerLastName then return false; end
+
+			return PlayerLastName.Value == LocalLastName.Value;
+		end;
+	};
+};
+
+CustomTeams[5208655184] = CustomTeams[3016661674]; -- rogue gaia
+CustomTeams[3541987450] = CustomTeams[3016661674]; -- rogue khei
 
 local RenderList = {Instances = {}};
+
 function RenderList:AddOrUpdateInstance(Instance, Obj2Draw, Text, Color)
 	RenderList.Instances[Instance] = { ParentInstance = Instance; Instance = Obj2Draw; Text = Text; Color = Color };
 	return RenderList.Instances[Instance];
@@ -194,6 +215,20 @@ local Modules = {
 						local M = tostring(Money.Value);
 
 						pcall(RenderList.AddOrUpdateInstance, RenderList, v, Main, string.format('Money Printer\nOwned by %s\n[%s]', O, M), Color3.fromRGB(13, 255, 227));
+					end
+				end
+			end
+		end;
+	};
+	[4801598506] = {
+		CustomESP = function()
+			if workspace:FindFirstChild'Mobs' and workspace.Mobs:FindFirstChild'Forest1' then
+				for i, v in pairs(workspace.Mobs.Forest1:GetChildren()) do
+					local Main	= v:FindFirstChild'Head';
+					local Hum	= v:FindFirstChild'Mob';
+
+					if Main and Hum then
+						pcall(RenderList.AddOrUpdateInstance, RenderList, v, Main, string.format('[%s] [%s/%s]', v.Name, Hum.Health, Hum.MaxHealth), Color3.fromRGB(13, 255, 227));
 					end
 				end
 			end
@@ -320,7 +355,10 @@ local Modules = {
 			return Name;
 		end;
 	};
-} Modules[5208655184] = Modules[3016661674];
+};
+
+Modules[5208655184] = Modules[3016661674]; -- rogue gaia
+Modules[3541987450] = Modules[3016661674]; -- rogue khei
 
 if Modules[game.PlaceId] ~= nil then
 	local Module = Modules[game.PlaceId];
@@ -588,12 +626,6 @@ local function Combine(...)
 		end
 	end
 	return Output
-end
-function IsStringEmpty(String)
-	if type(String) == 'string' then
-		return String:match'^%s+$' ~= nil or #String == 0 or String == '' or false;
-	end
-	return false
 end
 
 function LineBox:Create(Properties)
@@ -1720,7 +1752,8 @@ end
 local CustomTeam = CustomTeams[game.PlaceId];
 
 if CustomTeam ~= nil then
-	ypcall(CustomTeam.Initialize);
+	if CustomTeam.Initialize then ypcall(CustomTeam.Initialize) end
+
 	CheckTeam = CustomTeam.CheckTeam;
 end
 
@@ -1939,7 +1972,7 @@ function UpdatePlayerData()
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
-						if TracerPosition.X >= Camera.ViewportSize.X or TracerPosition.Y >= Camera.ViewportSize.Y then
+						if TracerPosition.X >= Camera.ViewportSize.X or TracerPosition.Y >= Camera.ViewportSize.Y or TracerPosition.X < 0 or TracerPosition.Y < 0 then
 							TracerPosition = V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
 						end
 
