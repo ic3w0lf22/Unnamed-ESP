@@ -62,17 +62,13 @@ local Debounce			= setmetatable({}, {
 	end;
 });
 
-if shared.UESP_InputChangedCon then pcall(function() shared.UESP_InputChangedCon:disconnect() end); end
-if shared.UESP_InputBeganCon then pcall(function() shared.UESP_InputBeganCon:disconnect() end); end
-if shared.UESP_InputEndedCon then pcall(function() shared.UESP_InputEndedCon:disconnect() end); end
-if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose(); end
+if shared.UESP_InputChangedCon then shared.UESP_InputChangedCon:Disconnect() end
+if shared.UESP_InputBeganCon then shared.UESP_InputBeganCon:Disconnect() end
+if shared.UESP_InputEndedCon then shared.UESP_InputEndedCon:Disconnect() end
+if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose() end
 
 local RealPrint, LastPrintTick = print, 0;
-local LatestPrints = setmetatable({}, {
-	__index = function(t, i)
-		return rawget(t, i) or 0;
-	end
-});
+local LatestPrints = setmetatable({}, { __index = function(t, i) return rawget(t, i) or 0 end });
 
 local function print(...)
 	local Content = unpack{...};
@@ -86,6 +82,7 @@ end
 
 local function FromHex(HEX)
 	HEX = HEX:gsub('#', '');
+	
 	return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
 end
 
@@ -93,7 +90,8 @@ local function IsStringEmpty(String)
 	if type(String) == 'string' then
 		return String:match'^%s+$' ~= nil or #String == 0 or String == '' or false;
 	end
-	return false
+	
+	return false;
 end
 
 local function Set(t, i, v)
@@ -113,7 +111,7 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			Teams.Sheriffs = S;
 			Teams.Bandits = B;
 
-			Event.OnClientEvent:connect(function(id, PlayerName, Team, Remove) -- stolen straight from decompiled src lul
+			Event.OnClientEvent:Connect(function(id, PlayerName, Team, Remove) -- stolen straight from decompiled src lul
 				if id == 'UpdateTeam' then
 					local TeamTable, NotTeamTable
 					if Team == 'Bandits' then
@@ -649,10 +647,10 @@ function LineBox:Create(Properties)
 	function Box:Update(CF, Size, Color, Properties)
 		if not CF or not Size then return end
 
-		local TLPos, Visible1	= WorldToViewport((CF * CFrame.new( Size.X,  Size.Y, 0)).p);
-		local TRPos, Visible2	= WorldToViewport((CF * CFrame.new(-Size.X,  Size.Y, 0)).p);
-		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).p);
-		local BRPos, Visible4	= WorldToViewport((CF * CFrame.new(-Size.X, -Size.Y, 0)).p);
+		local TLPos, Visible1	= WorldToViewport((CF * CFrame.new( Size.X,  Size.Y, 0)).Position);
+		local TRPos, Visible2	= WorldToViewport((CF * CFrame.new(-Size.X,  Size.Y, 0)).Position);
+		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).Position);
+		local BRPos, Visible4	= WorldToViewport((CF * CFrame.new(-Size.X, -Size.Y, 0)).Position);
 
 		local Quad = Box['Quad'];
 
@@ -1033,7 +1031,7 @@ function ColorPicker.new(Position, Size, Color)
                 local Center = Main.Position + Bounds;
                 local R = (MousePosition - Center);
         
-                if R.magnitude < Bounds.X and R.Magnitude > Bounds.X - 20 then
+                if R.Magnitude < Bounds.X and R.Magnitude > Bounds.X - 20 then
                     self.Item = 'Ring';
                 end
                 
@@ -1522,7 +1520,7 @@ delay(0.1, function()
 	SubMenu:Hide();
 end);
 
-shared.UESP_InputChangedCon = UserInputService.InputChanged:connect(function(input)
+shared.UESP_InputChangedCon = UserInputService.InputChanged:Connect(function(input)
 	if input.UserInputType.Name == 'MouseMovement' and Options.MenuOpen.Value then
 		for i, v in pairs(Sliders) do
 			local Values = {
@@ -1539,7 +1537,7 @@ shared.UESP_InputChangedCon = UserInputService.InputChanged:connect(function(inp
 		end
 	end
 end)
-shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
+shared.UESP_InputBeganCon = UserInputService.InputBegan:Connect(function(input)
 	if input.UserInputType.Name == 'MouseButton1' and Options.MenuOpen.Value then
 		MouseHeld = true;
 		local Bar = Menu:GetInstance'TopBar';
@@ -1585,7 +1583,7 @@ shared.UESP_InputBeganCon = UserInputService.InputBegan:connect(function(input)
 		end
 	end
 end)
-shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
+shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 	if input.UserInputType.Name == 'MouseButton1' and Options.MenuOpen.Value then
 		MouseHeld = false;
 		DragTracerPosition = false;
@@ -1656,12 +1654,12 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:connect(function(input)
 					local Humanoid = Character:FindFirstChildOfClass'Humanoid';
 					
 					if Head then
-						local Distance  = (Camera.CFrame.p - Head.Position).magnitude;
+						local Distance  = (Camera.CFrame.Position - Head.Position).Magnitude;
 						
 						if Distance > 2500 then continue; end
 
-						local Direction = -(Camera.CFrame.p - Mouse.Hit.p).unit;
-						local Relative  = Character.Head.Position - Camera.CFrame.p;
+						local Direction = -(Camera.CFrame.Position - Mouse.Hit.Position).unit;
+						local Relative  = Character.Head.Position - Camera.CFrame.Position;
 						local Unit      = Relative.unit;
 
 						local DP = Direction:Dot(Unit);
@@ -1771,9 +1769,9 @@ function CheckPlayer(Player, Character)
 		local Head = Character:FindFirstChild'Head';
 
 		if Pass and Character and Head then
-			Distance = (Camera.CFrame.p - Head.Position).magnitude;
+			Distance = (Camera.CFrame.Position - Head.Position).Magnitude;
 			if Options.VisCheck.Value then
-				Pass = CheckRay(Player, Distance, Camera.CFrame.p, (Head.Position - Camera.CFrame.p).unit);
+				Pass = CheckRay(Player, Distance, Camera.CFrame.Position, (Head.Position - Camera.CFrame.Position).unit);
 			end
 			if Distance > Options.MaxDistance.Value then
 				Pass = false;
@@ -1793,9 +1791,9 @@ function CheckDistance(Instance)
 	local Distance = 0;
 
 	if Instance ~= nil then
-		Distance = (Camera.CFrame.p - Instance.Position).magnitude;
+		Distance = (Camera.CFrame.Position - Instance.Position).Magnitude;
 		if Options.VisCheck.Value then
-			Pass = CheckRay(Instance, Distance, Camera.CFrame.p, (Instance.Position - Camera.CFrame.p).unit);
+			Pass = CheckRay(Instance, Distance, Camera.CFrame.Position, (Instance.Position - Camera.CFrame.Position).unit);
 		end
 		if Distance > Options.MaxDistance.Value then
 			Pass = false;
@@ -1986,7 +1984,7 @@ function UpdatePlayerData()
 					end
 					
 					if ScreenPosition.Z > 0 then
-						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y + (Options.YOffset.Value / 25), 0)).p);
+						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y + (Options.YOffset.Value / 25), 0)).Position);
 						local Scale					= Head.Size.Y / 2;
 
 						if Options.ShowName.Value then
@@ -2028,8 +2026,8 @@ function UpdatePlayerData()
 							DistanceTag.Visible = false;
 						end
 						if Options.ShowDot.Value and Vis then
-							local Top			= WorldToViewport((Head.CFrame * CFrame.new(0, Scale, 0)).p);
-							local Bottom		= WorldToViewport((Head.CFrame * CFrame.new(0, -Scale, 0)).p);
+							local Top			= WorldToViewport((Head.CFrame * CFrame.new(0, Scale, 0)).Position);
+							local Bottom		= WorldToViewport((Head.CFrame * CFrame.new(0, -Scale, 0)).Position);
 							local Radius		= (Top - Bottom).y;
 
 							HeadDot.Visible		= true;
