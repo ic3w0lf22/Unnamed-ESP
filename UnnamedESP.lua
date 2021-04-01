@@ -2,6 +2,14 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
+local f = debug.getupvalue(Drawing.new, 'reverseColor') -- remove aztup's anti april fools >:)
+
+if f then
+    debug.setupvalue(Drawing.new, 'reverseColor', function(c)
+        return c
+    end)
+end
+
 local UserInputService	= game:GetService'UserInputService';
 local HttpService		= game:GetService'HttpService';
 local GUIService		= game:GetService'GuiService';
