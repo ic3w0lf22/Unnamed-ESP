@@ -140,7 +140,15 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return LocalTeam[Player.Name] and true or false;
 		end;
 	};
-	[3016661674] = {
+	[5208655184] = {
+		CheckTeam = function(Player)
+			local LocalLastName = LocalPlayer:GetAttribute'LastName' if not LocalLastName or IsStringEmpty(LocalLastName) then return true end
+			local PlayerLastName = Player:GetAttribute'LastName' if not PlayerLastName then return false end
+
+			return PlayerLastName == LocalLastName
+		end
+	};
+	[3541987450] = {
 		CheckTeam = function(Player)
 			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
 			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
@@ -151,9 +159,6 @@ local CustomTeams = { -- Games that don't use roblox's team system
 		end;
 	};
 };
-
-CustomTeams[5208655184] = CustomTeams[3016661674]; -- rogue gaia
-CustomTeams[3541987450] = CustomTeams[3016661674]; -- rogue khei
 
 local RenderList = {Instances = {}};
 
@@ -218,6 +223,27 @@ local Modules = {
 			end
 		end;
 	};
+	-- [4581966615] = {
+	-- 	CustomESP = function()
+	-- 		if workspace:FindFirstChild'Entities' then
+	-- 			for i, v in pairs(workspace.Entities:GetChildren()) do
+	-- 				if not v.Name:match'Printer' then continue end
+
+	-- 				local Properties = v:FindFirstChild'Properties' if not Properties then continue end
+	-- 				local Main	= v:FindFirstChild'hitbox';
+	-- 				local Owner	= Properties:FindFirstChild'Owner';
+	-- 				local Money	= Properties:FindFirstChild'CurrentPrinted'
+					
+	-- 				if Main and Owner and Money then
+	-- 					local O = Owner.Value and tostring(Owner.Value) or 'no one';
+	-- 					local M = tostring(Money.Value);
+
+	-- 					pcall(RenderList.AddOrUpdateInstance, RenderList, v, Main, string.format('Money Printer\nOwned by %s\n[%s]', O, M), Color3.fromRGB(13, 255, 227));
+	-- 				end
+	-- 			end
+	-- 		end
+	-- 	end;
+	-- };
 	[4801598506] = {
 		CustomESP = function()
 			if workspace:FindFirstChild'Mobs' and workspace.Mobs:FindFirstChild'Forest1' then
@@ -248,25 +274,41 @@ local Modules = {
 		end;
 	};
 	[5208655184] = {
-		CustomPlayerTag = function(Player)
-			local Name = '';
+		CustomESP = function()
+			-- if workspace:FindFirstChild'Live' then
+			-- 	for i, v in pairs(workspace.Live:GetChildren()) do
+			-- 		if v.Name:sub(1, 1) == '.' then
+			-- 			local Main = v:FindFirstChild'Head';
 
-			if Player:FindFirstChild'leaderstats' then
+			-- 			if Main then
+			-- 				pcall(RenderList.AddOrUpdateInstance, RenderList, v, Main, v.Name:sub(2), Color3.fromRGB(250, 50, 40));
+			-- 			end
+			-- 		end
+			-- 	end
+			-- end
+		end;
+		CustomPlayerTag = function(Player)
+			if game.PlaceVersion < 457 then return '' end
+
+			local Name = '';
+			local FirstName = Player:GetAttribute'FirstName'
+
+			if typeof(FirstName) == 'string' and #FirstName > 0 then
 				local Prefix = '';
 				local Extra = {};
 				Name = Name .. '\n[';
 
-				if Player.leaderstats:FindFirstChild'Prestige' and Player.leaderstats.Prestige.ClassName == 'IntValue' and Player.leaderstats.Prestige.Value > 0 then
-					Name = Name .. '#' .. tostring(Player.leaderstats.Prestige.Value) .. ' ';
+				if Player:GetAttribute'Prestige' > 0 then
+					Name = Name .. '#' .. tostring(Player:GetAttribute'Prestige') .. ' ';
 				end
-				if Player.leaderstats:FindFirstChild'HouseRank' and Player.leaderstats:FindFirstChild'Gender' and Player.leaderstats.HouseRank.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.HouseRank.Value) then
-					Prefix = Player.leaderstats.HouseRank.Value == 'Owner' and (Player.leaderstats.Gender.Value == 'Female' and 'Lady ' or 'Lord ') or '';
+				if not IsStringEmpty(Player:GetAttribute'HouseRank') then
+					Prefix = Player:GetAttribute'HouseRank' == 'Owner' and (Player:GetAttribute'Gender' == 'Female' and 'Lady ' or 'Lord ') or '';
 				end
-				if Player.leaderstats:FindFirstChild'FirstName' and Player.leaderstats.FirstName.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.FirstName.Value) then
-					Name = Name .. '' .. Prefix .. Player.leaderstats.FirstName.Value;
+				if not IsStringEmpty(FirstName) then
+					Name = Name .. '' .. Prefix .. FirstName;
 				end
-				if Player.leaderstats:FindFirstChild'LastName' and Player.leaderstats.LastName.ClassName == 'StringValue' and not IsStringEmpty(Player.leaderstats.LastName.Value) then
-					Name = Name .. ' ' .. Player.leaderstats.LastName.Value;
+				if not IsStringEmpty(Player:GetAttribute'LastName') then
+					Name = Name .. ' ' .. Player:GetAttribute'LastName';
 				end
 
 				if not IsStringEmpty(Name) then Name = Name .. ']'; end
@@ -279,9 +321,9 @@ local Modules = {
 
 					if Character:FindFirstChild'Mana'	 		then table.insert(Extra, 'M' .. math.floor(Character.Mana.Value)); end
 					if Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V'); end
-					if Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL'); end
+					if Character:FindFirstChild'Observe'		then table.insert(Extra, 'ILL'); end
 					if Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC'); end
-					if Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
+					if Character:FindFirstChild'World\'s Pulse' then table.insert(Extra, 'DZIN'); end
 					if Character:FindFirstChild'Shift'		 	then table.insert(Extra, 'MAD'); end
 					if Character:FindFirstChild'Head' and Character.Head:FindFirstChild'FacialMarking' then
 						local FM = Character.Head:FindFirstChild'FacialMarking';
@@ -291,6 +333,8 @@ local Modules = {
 							table.insert(Extra, 'SEER');
 						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4094417635' then
 							table.insert(Extra, 'JESTER');
+						elseif FM.Texture == 'http://www.roblox.com/asset/?id=4072968656' then
+							table.insert(Extra, 'BLADE');
 						end
 					end
 				end
@@ -368,6 +412,13 @@ local Modules = {
 			return Name;
 		end;
 	};
+	[4691401390] = { -- Vast Realm
+		CustomCharacter = function(Player)
+			if workspace:FindFirstChild'Players' then
+				return workspace.Players:FindFirstChild(Player.Name);
+			end
+		end
+	};
 };
 
 if Modules[game.PlaceId] ~= nil then
@@ -412,6 +463,7 @@ end
 
 function NewDrawing(InstanceName)
 	local Instance = Drawing.new(InstanceName);
+	-- pcall(Set, Instance, 'OutlineOpacity', 0.8)
 	return (function(Properties)
 		for i, v in pairs(Properties) do
 			pcall(Set, Instance, i, v);
@@ -613,8 +665,8 @@ Options('SaveSettings', 'Save Settings', function()
 		COptions[i] = v;
 	end
 	
-	if typeof(COptions.TeamColor) == 'Color3' then COptions.TeamColor = { R = COptions.TeamColor.R; G = COptions.TeamColor.G; B = COptions.TeamColor.B } end
-	if typeof(COptions.EnemyColor) == 'Color3' then COptions.EnemyColor = { R = COptions.EnemyColor.R; G = COptions.EnemyColor.G; B = COptions.EnemyColor.B } end
+	if typeof(TeamColor) == 'Color3' then COptions.TeamColor = { R = TeamColor.R; G = TeamColor.G; B = TeamColor.B } end
+	if typeof(EnemyColor) == 'Color3' then COptions.EnemyColor = { R = EnemyColor.R; G = EnemyColor.G; B = EnemyColor.B } end
 	
 	if typeof(COptions.MenuKey.Value) == 'EnumItem' then COptions.MenuKey = COptions.MenuKey.Value.Name end
 	if typeof(COptions.ToggleKey.Value) == 'EnumItem' then COptions.ToggleKey = COptions.ToggleKey.Value.Name end
@@ -647,7 +699,10 @@ function LineBox:Create(Properties)
 		Visible			= true;
 	}, Properties);
 
-	if syn then
+	if shared.am_ic3 then -- sory just my preference, dynamic boxes will be optional in unnamed esp v2
+		Box['OutlineSquare']= NewDrawing'Square'(Properties);
+		Box['Square'] 		= NewDrawing'Square'(Properties);
+	elseif syn then
 		Box['Quad']			= NewDrawing'Quad'(Properties);
 	else
 		Box['TopLeft']		= NewDrawing'Line'(Properties);
@@ -656,9 +711,78 @@ function LineBox:Create(Properties)
 		Box['BottomRight']	= NewDrawing'Line'(Properties);
 	end
 
-	function Box:Update(CF, Size, Color, Properties)
+	function Box:Update(CF, Size, Color, Properties, Parts)
 		if not CF or not Size then return end
 
+		if shared.am_ic3 and typeof(Parts) == 'table' then
+			local AllCorners = {};
+			
+			for i, v in pairs(Parts) do
+				-- if not v:IsA'BasePart' then continue end
+				
+				local CF, Size = v.CFrame, v.Size;
+				-- CF, Size = v.Parent:GetBoundingBox();
+
+				local Corners = {
+					Vector3.new(CF.X + Size.X / 2, CF.Y + Size.Y / 2, CF.Z + Size.Z / 2);
+					Vector3.new(CF.X - Size.X / 2, CF.Y + Size.Y / 2, CF.Z + Size.Z / 2);
+					Vector3.new(CF.X - Size.X / 2, CF.Y - Size.Y / 2, CF.Z - Size.Z / 2);
+					Vector3.new(CF.X + Size.X / 2, CF.Y - Size.Y / 2, CF.Z - Size.Z / 2);
+					Vector3.new(CF.X - Size.X / 2, CF.Y + Size.Y / 2, CF.Z - Size.Z / 2);
+					Vector3.new(CF.X + Size.X / 2, CF.Y + Size.Y / 2, CF.Z - Size.Z / 2);
+					Vector3.new(CF.X - Size.X / 2, CF.Y - Size.Y / 2, CF.Z + Size.Z / 2);
+					Vector3.new(CF.X + Size.X / 2, CF.Y - Size.Y / 2, CF.Z + Size.Z / 2);
+				};
+
+				for i, v in pairs(Corners) do
+					table.insert(AllCorners, v);
+				end
+
+				-- break
+			end
+
+			local xMin, yMin = Camera.ViewportSize.X, Camera.ViewportSize.Y;
+			local xMax, yMax = 0, 0;
+			local Vs = true;
+
+			for i, v in pairs(AllCorners) do				
+				local Position, V = WorldToViewport(v);
+
+				if VS and not V then Vs = false break end
+
+				if Position.X > xMax then
+					xMax = Position.X;
+				end
+				if Position.X < xMin then
+					xMin = Position.X;
+				end
+				if Position.Y > yMax then
+					yMax = Position.Y;
+				end
+				if Position.Y < yMin then
+					yMin = Position.Y;
+				end
+			end
+
+			local xSize, ySize = xMax - xMin, yMax - yMin;
+
+			local Outline = Box['OutlineSquare'];
+			local Square = Box['Square'];
+			Outline.Visible = Vs;
+			Square.Visible = Vs;
+			Square.Position = V2New(xMin, yMin);
+			Square.Color	= Color;
+			Square.Thickness = math.floor(Outline.Thickness * 0.3);
+			-- Square.Position = V2New(xMin, yMin);
+			Square.Size = V2New(xSize, ySize);
+			Outline.Position = Square.Position;
+			Outline.Size = Square.Size;
+			Outline.Color = Color3.new(0.12, 0.12, 0.12);
+			Outline.Transparency = 0.75;
+
+			return
+		end
+		
 		local TLPos, Visible1	= WorldToViewport((CF * CFrame.new( Size.X,  Size.Y, 0)).Position);
 		local TRPos, Visible2	= WorldToViewport((CF * CFrame.new(-Size.X,  Size.Y, 0)).Position);
 		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).Position);
@@ -728,7 +852,12 @@ function LineBox:Create(Properties)
 		end
 	end
 	function Box:SetVisible(bool)
-		pcall(Set, Box['Quad'],				'Visible', bool);
+		if shared.am_ic3 then
+			Box['Square'].Visible = bool;
+			Box['OutlineSquare'].Visible = bool;
+		else
+			pcall(Set, Box['Quad'],				'Visible', bool);
+		end
 		-- pcall(Set, Box['TopLeft'],		'Visible', bool);
 		-- pcall(Set, Box['TopRight'],		'Visible', bool);
 		-- pcall(Set, Box['BottomLeft'],	'Visible', bool);
@@ -736,7 +865,12 @@ function LineBox:Create(Properties)
 	end
 	function Box:Remove()
 		self:SetVisible(false);
-		Box['Quad']:Remove();
+		if shared.am_ic3 then
+			Box['Square']:Remove();
+			Box['OutlineSquare']:Remove();
+		else
+			Box['Quad']:Remove();
+		end
 		-- Box['TopLeft']:Remove();
 		-- Box['TopRight']:Remove();
 		-- Box['BottomLeft']:Remove();
@@ -821,6 +955,8 @@ local ImageCache = {};
 local function SetImage(Drawing, Url)
 	local Data = IsSynapse and game:HttpGet(Url) or Url;
 
+	print(Drawing, IsSynapse)
+
 	Drawing[IsSynapse and 'Data' or 'Uri'] = ImageCache[Url] or Data;
 	ImageCache[Url] = Data;
     
@@ -890,7 +1026,8 @@ local function CreateDrawingsTable()
                 Object.Size = 20;
                 Object.Color = Color3.new(1, 1, 1);
                 Object.Center = true;
-                Object.Outline = true;
+				Object.Outline = true;
+				OutlineOpacity = 0.5;
             elseif Type == 'Square' or Type == 'Rectangle' then
                 Object.Thickness = 2;
                 Object.Filled = false;
@@ -1110,7 +1247,7 @@ function SubMenu:Show(Position, Title, Options)
 
 	self.Bounds = { BasePosition.X, BasePosition.Y, End.X, End.Y };
 
-	delay(.025, function()
+	delay(0.025, function()
 		if not self.Open then return; end
 
 		Menu:AddMenuInstance('Sub-Main', 'Square', {
@@ -1295,6 +1432,7 @@ function CreateMenu(NewPosition) -- Create Menu
 		Visible		= true;
 		Transparency= 1; -- proto outline fix
 		Outline 	= true;
+		OutlineOpacity = 0.5;
 	});
 	Menu:AddMenuInstance('TopBarTextBR', 'Text', {
 		Size 		= 18;
@@ -1304,6 +1442,7 @@ function CreateMenu(NewPosition) -- Create Menu
 		Visible		= true;
 		Transparency= 1;
 		Outline 	= true;
+		OutlineOpacity = 0.5;
 	});
 	Menu:AddMenuInstance('Filling', 'Square', {
 		Size		= BaseSize - V2New(0, 60);
@@ -1351,6 +1490,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Color		= Colors.Secondary.Light;
 				Transparency= 1;
 				Outline		= true;
+				OutlineOpacity = 0.5;
 			});
 		end
 	end)
@@ -1384,6 +1524,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Center			= true;
 				Transparency	= 1;
 				Outline			= true;
+				OutlineOpacity  = 0.5;
 				Visible			= true;
 				Color			= Colors.White;
 			}); Text.Position	= Line.Position + (Line.Size / 2) - V2New(0, Text.TextBounds.Y / 1.75);
@@ -1393,6 +1534,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Center			= true;
 				Transparency	= 1;
 				Outline			= true;
+				OutlineOpacity  = 0.5;
 				Visible			= true;
 				Color			= Colors.White;
 				Position		= Text.Position;
@@ -1403,6 +1545,7 @@ function CreateMenu(NewPosition) -- Create Menu
 
 			Dummy:GetPropertyChangedSignal'Value':Connect(function()
 				Text.Transparency = Dummy.Value;
+				-- Text.OutlineTransparency = 1 - Dummy.Value;
 				AMT.Transparency = 1 - Dummy.Value;
 			end);
 
@@ -1455,6 +1598,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Color		= Colors.Secondary.Light;
 				Transparency= 1;
 				Outline		= true;
+				OutlineOpacity = 0.5;
 			});
 			local BindText	= Menu:AddMenuInstance(Format('%s_BindText', v.Name), 'Text', {
 				Text		= tostring(v.Value):match'%w+%.%w+%.(.+)';
@@ -1464,6 +1608,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Color		= Colors.Secondary.Light;
 				Transparency= 1;
 				Outline		= true;
+				OutlineOpacity = 0.5;
 			});
 
 			Options[i].BaseSize = BaseSize;
@@ -1495,6 +1640,7 @@ function CreateMenu(NewPosition) -- Create Menu
 				Color		= Colors.Secondary.Light;
 				Transparency= 1;
 				Outline		= true;
+				OutlineOpacity = 0.5;
 			});
 
 			-- BindText.Position = BasePosition + V2New(BaseSize.X - BindText.TextBounds.X - 10, -10);
@@ -1668,7 +1814,7 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 					if Head then
 						local Distance  = (Camera.CFrame.Position - Head.Position).Magnitude;
 						
-						if Distance > 2500 then continue; end
+						if Distance > Options.MaxDistance.Value then continue; end
 
 						local Direction = -(Camera.CFrame.Position - Mouse.Hit.Position).unit;
 						local Relative  = Character.Head.Position - Camera.CFrame.Position;
@@ -1698,7 +1844,15 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 	end
 end)
 
-function ToggleMenu()
+local function CameraCon() -- unnamed esp v1 sucks
+	workspace.CurrentCamera:GetPropertyChangedSignal'ViewportSize':Connect(function()
+		TracerPosition = V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
+	end);
+end
+
+CameraCon();
+
+local function ToggleMenu()
 	if Options.MenuOpen.Value then
 		-- GUIService:SetMenuIsOpen(true);
 		GetTableData(shared.MenuDrawingData.Instances)(function(i, v)
@@ -1717,7 +1871,7 @@ function ToggleMenu()
 	end
 end
 
-function CheckRay(Instance, Distance, Position, Unit)
+local function CheckRay(Instance, Distance, Position, Unit)
 	local Pass = true;
 	local Model = Instance;
 
@@ -1755,7 +1909,7 @@ function CheckRay(Instance, Distance, Position, Unit)
 	return Pass;
 end
 
-function CheckTeam(Player)
+local function CheckTeam(Player)
 	if Player.Neutral and LocalPlayer.Neutral then return true; end
 	return Player.TeamColor == LocalPlayer.TeamColor;
 end
@@ -1768,7 +1922,7 @@ if CustomTeam ~= nil then
 	CheckTeam = CustomTeam.CheckTeam;
 end
 
-function CheckPlayer(Player, Character)
+local function CheckPlayer(Player, Character)
 	if not Options.Enabled.Value then return false end
 
 	local Pass = true;
@@ -1797,7 +1951,7 @@ function CheckPlayer(Player, Character)
 	return Pass, Distance;
 end
 
-function CheckDistance(Instance)
+local function CheckDistance(Instance)
 	if not Options.Enabled.Value then return false end
 
 	local Pass = true;
@@ -1818,7 +1972,7 @@ function CheckDistance(Instance)
 	return Pass, Distance;
 end
 
-function UpdatePlayerData()
+local function UpdatePlayerData()
 	if (tick() - LastRefresh) > (Options.RefreshRate.Value / 1000) then
 		LastRefresh = tick();
 		if CustomESP and Options.Enabled.Value then
@@ -1830,6 +1984,11 @@ function UpdatePlayerData()
 
 				Data.Instance = v.Instance;
 
+				Data.Instances['OutlineTracer'] = Data.Instances['OutlineTracer'] or NewDrawing'Line'{
+					Transparency	= 0.75;
+					Thickness		= 5;
+					Color 			= Color3.new(0.1, 0.1, 0.1);
+				}
 				Data.Instances['Tracer'] = Data.Instances['Tracer'] or NewDrawing'Line'{
 					Transparency	= 1;
 					Thickness		= 2;
@@ -1850,6 +2009,7 @@ function UpdatePlayerData()
 				local NameTag		= Data.Instances['NameTag'];
 				local DistanceTag	= Data.Instances['DistanceTag'];
 				local Tracer		= Data.Instances['Tracer'];
+				local OutlineTracer	= Data.Instances['OutlineTracer'];
 
 				local Pass, Distance = CheckDistance(v.Instance);
 
@@ -1871,8 +2031,14 @@ function UpdatePlayerData()
 						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
+						OutlineTracer.Visible = true;
+						OutlineTracer.Transparency = Tracer.Transparency - 0.1;
+						OutlineTracer.From = Tracer.From;
+						OutlineTracer.To = Tracer.To;
+						OutlineTracer.Color	= Color3.new(0.1, 0.1, 0.1);
 					else
 						Tracer.Visible = false;
+						OutlineTracer.Visible = false;
 					end
 
 					if ScreenPosition.Z > 0 then
@@ -1921,11 +2087,13 @@ function UpdatePlayerData()
 					NameTag.Visible			= false;
 					DistanceTag.Visible		= false;
 					Tracer.Visible			= false;
+					OutlineTracer.Visible	= false;
 				end
 
 				Data.Instances['NameTag'] 		= NameTag;
 				Data.Instances['DistanceTag']	= DistanceTag;
 				Data.Instances['Tracer']		= Tracer;
+				Data.Instances['OutlineTracer']	= OutlineTracer;
 
 				shared.InstanceData[v.Instance:GetDebugId()] = Data;
 			end
@@ -1933,10 +2101,15 @@ function UpdatePlayerData()
 		for i, v in pairs(Players:GetPlayers()) do
 			local Data = shared.InstanceData[v.Name] or { Instances = {}; };
 
-			Data.Instances['Box'] = Data.Instances['Box'] or LineBox:Create{Thickness = 3};
+			Data.Instances['Box'] = Data.Instances['Box'] or LineBox:Create{Thickness = 4};
+			Data.Instances['OutlineTracer'] = Data.Instances['OutlineTracer'] or NewDrawing'Line'{
+				Transparency	= 1;
+				Thickness		= 3;
+				Color			= Color3.new(0.1, 0.1, 0.1);
+			}
 			Data.Instances['Tracer'] = Data.Instances['Tracer'] or NewDrawing'Line'{
 				Transparency	= 1;
-				Thickness		= 2;
+				Thickness		= 1;
 			}
 			Data.Instances['HeadDot'] = Data.Instances['HeadDot'] or NewDrawing'Circle'{
 				Filled			= true;
@@ -1946,18 +2119,21 @@ function UpdatePlayerData()
 				Size			= Options.TextSize.Value;
 				Center			= true;
 				Outline			= Options.TextOutline.Value;
+				OutlineOpacity	= 1;
 				Visible			= true;
 			};
 			Data.Instances['DistanceHealthTag'] = Data.Instances['DistanceHealthTag'] or NewDrawing'Text'{
 				Size			= Options.TextSize.Value - 1;
 				Center			= true;
 				Outline			= Options.TextOutline.Value;
+				OutlineOpacity	= 1;
 				Visible			= true;
 			};
 
 			local NameTag		= Data.Instances['NameTag'];
 			local DistanceTag	= Data.Instances['DistanceHealthTag'];
 			local Tracer		= Data.Instances['Tracer'];
+			local OutlineTracer	= Data.Instances['OutlineTracer'];
 			local HeadDot		= Data.Instances['HeadDot'];
 			local Box			= Data.Instances['Box'];
 
@@ -1992,8 +2168,13 @@ function UpdatePlayerData()
 						Tracer.From		= TracerPosition;
 						Tracer.To		= V2New(Position.X, Position.Y);
 						Tracer.Color	= Color;
+						OutlineTracer.From = Tracer.From;
+						OutlineTracer.To = Tracer.To;
+						OutlineTracer.Transparency = Tracer.Transparency - 0.15;
+						OutlineTracer.Visible = true;
 					else
 						Tracer.Visible = false;
+						OutlineTracer.Visible = false;
 					end
 					
 					if ScreenPosition.Z > 0 then
@@ -2007,6 +2188,8 @@ function UpdatePlayerData()
 							NameTag.Outline		= Options.TextOutline.Value;
 							NameTag.Position	= V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y) - V2New(0, NameTag.TextBounds.Y);
 							NameTag.Color		= Color;
+							NameTag.Color		= Color;
+							NameTag.OutlineColor= Color3.new(0.05, 0.05, 0.05);
 							NameTag.Transparency= 0.85;
 							if Drawing.Fonts and shared.am_ic3 then -- CURRENTLY SYNAPSE ONLY :MEGAHOLY:
 								NameTag.Font	= Drawing.Fonts.Monospace;
@@ -2034,6 +2217,7 @@ function UpdatePlayerData()
 							end
 
 							DistanceTag.Text = Str;
+							DistanceTag.OutlineColor = Color3.new(0.05, 0.05, 0.05);
 							DistanceTag.Position = (NameTag.Visible and NameTag.Position + V2New(0, NameTag.TextBounds.Y) or V2New(ScreenPositionUpper.X, ScreenPositionUpper.Y));
 						else
 							DistanceTag.Visible = false;
@@ -2051,7 +2235,14 @@ function UpdatePlayerData()
 							HeadDot.Visible = false;
 						end
 						if Options.ShowBoxes.Value and Vis and HumanoidRootPart then
-							Box:Update(HumanoidRootPart.CFrame, V3New(2, 3, 0) * (Scale * 2), Color);
+							local Body = {
+								Head;
+								Character:FindFirstChild'Left Leg' or Character:FindFirstChild'LeftLowerLeg';
+								Character:FindFirstChild'Right Leg' or Character:FindFirstChild'RightLowerLeg';
+								Character:FindFirstChild'Left Arm' or Character:FindFirstChild'LeftLowerArm';
+								Character:FindFirstChild'Right Arm' or Character:FindFirstChild'RightLowerArm';
+							}
+							Box:Update(HumanoidRootPart.CFrame, V3New(2, 3, 1) * (Scale * 2), Color, nil, shared.am_ic3 and Body);
 						else
 							Box:SetVisible(false);
 						end
@@ -2067,6 +2258,7 @@ function UpdatePlayerData()
 					DistanceTag.Visible		= false;
 					HeadDot.Visible			= false;
 					Tracer.Visible			= false;
+					OutlineTracer.Visible 	= false;
 					
 					Box:SetVisible(false);
 				end
@@ -2075,6 +2267,7 @@ function UpdatePlayerData()
 				DistanceTag.Visible		= false;
 				HeadDot.Visible			= false;
 				Tracer.Visible			= false;
+				OutlineTracer.Visible 	= false;
 
 				Box:SetVisible(false);
 			end
@@ -2086,12 +2279,13 @@ end
 
 local LastInvalidCheck = 0;
 
-function Update()
+local function Update()
 	if tick() - LastInvalidCheck > 0.3 then
 		LastInvalidCheck = tick();
 
 		if Camera.Parent ~= workspace then
 			Camera = workspace.CurrentCamera;
+			CameraCon();
 			WTVP = Camera.WorldToViewportPoint;
 		end
 
