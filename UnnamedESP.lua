@@ -47,6 +47,11 @@ local GetCharacter;
 local CurrentColorPicker;
 local Spectating;
 
+local Executor = (identifyexecutor or (function() return "" end))()
+local QUAD_SUPPORTED_EXPLOIT = (Executor == "Krnl")
+                                or (Executor == "ScriptWare")
+                                or (Executor == "Synapse X")
+
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
 shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
@@ -702,7 +707,7 @@ function LineBox:Create(Properties)
 	if shared.am_ic3 then -- sory just my preference, dynamic boxes will be optional in unnamed esp v2
 		Box['OutlineSquare']= NewDrawing'Square'(Properties);
 		Box['Square'] 		= NewDrawing'Square'(Properties);
-	elseif syn then
+	elseif QUAD_SUPPORTED_EXPLOIT then
 		Box['Quad']			= NewDrawing'Quad'(Properties);
 	else
 		Box['TopLeft']		= NewDrawing'Line'(Properties);
@@ -790,7 +795,7 @@ function LineBox:Create(Properties)
 
 		local Quad = Box['Quad'];
 
-		if syn then
+		if QUAD_SUPPORTED_EXPLOIT then
 			if Visible1 and Visible2 and Visible3 and Visible4 then
 				Quad.Visible = true;
 				Quad.Color	= Color;
