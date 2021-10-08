@@ -3,66 +3,64 @@ assert(Drawing, 'exploit not supported')
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
 local UserInputService	= game:GetService'UserInputService';
-local HttpService		= game:GetService'HttpService';
-local GUIService		= game:GetService'GuiService';
-local TweenService		= game:GetService'TweenService';
-local RunService		= game:GetService'RunService';
-local Players			= game:GetService'Players';
-local LocalPlayer		= Players.LocalPlayer;
-local Camera			= workspace.CurrentCamera;
-local Mouse				= LocalPlayer:GetMouse();
-local V2New				= Vector2.new;
-local V3New				= Vector3.new;
-local WTVP				= Camera.WorldToViewportPoint;
+local HttpService	= game:GetService'HttpService';
+local GUIService	= game:GetService'GuiService';
+local TweenService	= game:GetService'TweenService';
+local RunService	= game:GetService'RunService';
+local Players		= game:GetService'Players';
+local LocalPlayer	= Players.LocalPlayer;
+local Camera		= workspace.CurrentCamera;
+local Mouse		= LocalPlayer:GetMouse();
+local V2New		= Vector2.new;
+local V3New		= Vector3.new;
+local WTVP		= Camera.WorldToViewportPoint;
 local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
-local Menu				= {};
-local MouseHeld			= false;
-local LastRefresh		= 0;
-local OptionsFile		= 'IC3_ESP_SETTINGS.dat';
-local Binding			= false;
-local BindedKey			= nil;
-local OIndex			= 0;
-local LineBox			= {};
-local UIButtons			= {};
-local Sliders			= {};
-local ColorPicker		= { Loading = false; LastGenerated = 0 };
-local Dragging			= false;
-local DraggingUI		= false;
-local Rainbow			= false;
-local DragOffset		= V2New();
-local DraggingWhat		= nil;
-local OldData			= {};
-local IgnoreList		= {};
-local EnemyColor		= Color3.new(1, 0, 0);
-local TeamColor			= Color3.new(0, 1, 0);
-local MenuLoaded		= false;
-local ErrorLogging		= false;
+local Menu		= {};
+local MouseHeld		= false;
+local LastRefresh	= 0;
+local OptionsFile	= 'IC3_ESP_SETTINGS.dat';
+local Binding		= false;
+local BindedKey		= nil;
+local OIndex		= 0;
+local LineBox		= {};
+local UIButtons		= {};
+local Sliders		= {};
+local ColorPicker	= { Loading = false; LastGenerated = 0 };
+local Dragging		= false;
+local DraggingUI	= false;
+local Rainbow		= false;
+local DragOffset	= V2New();
+local DraggingWhat	= nil;
+local OldData		= {};
+local IgnoreList	= {};
+local EnemyColor	= Color3.new(1, 0, 0);
+local TeamColor		= Color3.new(0, 1, 0);
+local MenuLoaded	= false;
+local ErrorLogging	= false;
 local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
 local DragTracerPosition= false;
-local SubMenu 			= {};
-local IsSynapse 		= syn and not PROTOSMASHER_LOADED;
-local Connections 		= { Active = {} };
-local Signal 			= {}; Signal.__index = Signal;
+local SubMenu 		= {};
+local IsSynapse 	= syn and not PROTOSMASHER_LOADED;
+local Connections 	= { Active = {} };
+local Signal 		= {}; Signal.__index = Signal;
 local GetCharacter;
 local CurrentColorPicker;
 local Spectating;
 
-local Executor = (identifyexecutor or (function() return "" end))()
-local QUAD_SUPPORTED_EXPLOIT = (Executor == "Krnl")
-				or (Executor == "OxygenU")
-                                or (Executor == "ScriptWare")
-                                or (Executor == "Synapse X")
+local Executor = (identifyexecutor or (function() return '' end))()
+local SupportedExploits = { 'Synapse X', 'ScriptWare', 'Krnl', 'OxygenU' }
+local QUAD_SUPPORTED_EXPLOIT = table.find(SupportedExploits, Executor) ~= nil
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
 shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
-shared.InstanceData		= shared.InstanceData or {};
-shared.RSName			= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
+shared.InstanceData	= shared.InstanceData or {};
+shared.RSName		= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
 
-local GetDataName		= shared.RSName .. '-GetData';
-local UpdateName		= shared.RSName .. '-Update';
+local GetDataName	= shared.RSName .. '-GetData';
+local UpdateName	= shared.RSName .. '-Update';
 
-local Debounce			= setmetatable({}, {
+local Debounce		= setmetatable({}, {
 	__index = function(t, i)
 		return rawget(t, i) or false
 	end;
