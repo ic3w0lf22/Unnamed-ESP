@@ -49,6 +49,7 @@ local Spectating;
 
 local Executor = (identifyexecutor or (function() return "" end))()
 local QUAD_SUPPORTED_EXPLOIT = (Executor == "Krnl")
+				or (Executor == "OxygenU")
                                 or (Executor == "ScriptWare")
                                 or (Executor == "Synapse X")
 
