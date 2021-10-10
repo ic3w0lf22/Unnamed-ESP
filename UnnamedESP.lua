@@ -2031,8 +2031,6 @@ local function UpdatePlayerData()
 		LastRefresh = tick();
 		if CustomESP and Options.Enabled.Value then
 			local a, b = pcall(CustomESP);
-
-			if (not a) then warn(b) end
 		end
 		for i, v in pairs(RenderList.Instances) do
 			if v.Instance ~= nil and v.Instance.Parent ~= nil and v.Instance:IsA'BasePart' then
