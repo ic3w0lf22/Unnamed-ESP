@@ -174,31 +174,78 @@ end
 local CustomPlayerTag;
 local CustomESP;
 local CustomCharacter;
+local GetHealth;
+local GetAliveState;
+local CustomRootPartName;
 
 local Modules = {
 	[292439477] = {
 		CustomESP = function()
-			if not shared.PF_Replication then
-				for i, v in pairs(getgc(true)) do
-					if typeof(v) == 'table' and rawget(v, 'getbodyparts') then
-						shared.PF_Replication = v;
-						break;
+			if type(shared.PF_Replication) ~= 'table' then
+				local lastScan = shared.pfReplicationScan
+
+				if (tick() - (lastScan or 0)) > 0.01 then
+					shared.pfReplicationScan = tick()
+
+					local gc = getgc(true)
+					for i = 1, #gc do
+						local gcObject = gc[i];
+						if type(gcObject) == 'table' and type(rawget(gcObject, 'getbodyparts')) == 'function' then
+							shared.PF_Replication = gcObject;
+							break
+						end
 					end
 				end
-			else
-				for Index, Player in pairs(Players:GetPlayers()) do
-					if Player == LocalPlayer then continue end
 
-					local Body = shared.PF_Replication.getbodyparts(Player);
-
-					if Body and typeof(Body) == 'table' and rawget(Body, 'rootpart') then
-						Player.Character = Body.rootpart.Parent;
-					else
-						Player.Character = nil;
-					end
-				end
+				return
 			end
-		end
+
+			for Index, Player in pairs(Players:GetPlayers()) do
+				if Player == LocalPlayer then continue end
+
+				local Body = shared.PF_Replication.getbodyparts(Player);
+
+				if type(Body) == 'table' and typeof(rawget(Body, 'torso')) == 'Instance' then
+					Player.Character = Body.torso.Parent
+					continue
+				end
+
+				Player.Character = nil;
+			end
+		end,
+
+		GetHealth = function(Player)
+			if type(shared.pfHud) ~= 'table' then
+				return false
+			end
+
+			return shared.pfHud:getplayerhealth(Player)
+		end,
+
+		GetAliveState = function(Player)
+			if type(shared.pfHud) ~= 'table' then
+				local lastScan = shared.pfHudScan
+
+				if (tick() - (lastScan or 0)) > 0.1 then
+					shared.pfHudScan = tick()
+
+					local gc = getgc(true)
+					for i = 1, #gc do
+						local gcObject = gc[i];
+						if type(gcObject) == 'table' and type(rawget(gcObject, 'getplayerhealth')) == 'function' then
+							shared.pfHud = gcObject;
+							break
+						end
+					end
+				end
+
+				return
+			end
+
+			return shared.pfHud:isplayeralive(Player)
+		end,
+
+		CustomRootPartName = 'Torso',
 	};
 	[2950983942] = {
 		CustomCharacter = function(Player)
@@ -430,6 +477,9 @@ if Modules[game.PlaceId] ~= nil then
 	CustomPlayerTag = Module.CustomPlayerTag or nil;
 	CustomESP = Module.CustomESP or nil;
 	CustomCharacter = Module.CustomCharacter or nil;
+	GetHealth = Module.GetHealth or nil;
+	GetAliveState = Module.GetAliveState or nil;
+	CustomRootPartName = Module.CustomRootPartName or nil;
 end
 
 function GetCharacter(Player)
@@ -2147,8 +2197,12 @@ local function UpdatePlayerData()
 			if Pass and Character then
 				local Humanoid = Character:FindFirstChildOfClass'Humanoid';
 				local Head = Character:FindFirstChild'Head';
-				local HumanoidRootPart = Character:FindFirstChild'HumanoidRootPart';
-				local Dead = Humanoid and Humanoid:GetState().Name == 'Dead';
+				local HumanoidRootPart = Character:FindFirstChild(CustomRootPartName or 'HumanoidRootPart')
+
+				local Dead = (Humanoid and Humanoid:GetState().Name == 'Dead')
+				if type(GetAliveState) == 'function' then
+					Dead = (not GetAliveState(v, Character))
+				end
 
 				if Character ~= nil and Head and HumanoidRootPart and not Dead then
 					local ScreenPosition, Vis = WorldToViewport(Head.Position);
@@ -2216,8 +2270,16 @@ local function UpdatePlayerData()
 							if Options.ShowDistance.Value then
 								Str = Str .. Format('[%d] ', Distance);
 							end
-							if Options.ShowHealth.Value and Humanoid then
-								Str = Str .. Format('[%d/%d] [%s%%]', Humanoid.Health, Humanoid.MaxHealth, math.floor(Humanoid.Health / Humanoid.MaxHealth * 100));
+							if Options.ShowHealth.Value then								
+								if typeof(Humanoid) == 'Instance' then
+									Str = Str .. Format('[%d/%d] [%s%%]', Humanoid.Health, Humanoid.MaxHealth, math.floor(Humanoid.Health / Humanoid.MaxHealth * 100));
+								elseif type(GetHealth) == 'function' then
+									local health, maxHealth = GetHealth(v)
+									
+									if type(health) == 'number' and type(maxHealth) == 'number' then
+										Str = Str .. Format('[%d/%d] [%s%%]', health, maxHealth, math.floor(health / maxHealth * 100))
+									end
+								end
 							end
 
 							DistanceTag.Text = Str;
