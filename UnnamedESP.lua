@@ -510,7 +510,7 @@ local Modules = {
                     end
 
                     if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
-                        table.insert(Extra, ('A%d'):format(Armor.Value));
+                        table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
                     end
                 end
 
@@ -549,7 +549,7 @@ local Modules = {
                 end
 
                 if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
-                    table.insert(Extra, ('A%d'):format(Armor.Value));
+                    table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
                 end
             end
 
