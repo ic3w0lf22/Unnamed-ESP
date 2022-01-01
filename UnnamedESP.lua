@@ -165,21 +165,21 @@ local CustomTeams = { -- Games that don't use roblox's team system
     [6032399813] = {
 		CheckTeam = function(Player)
 			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
-			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
+			local LocalGuildName = LocalStats and LocalStats:FindFirstChild'Guild'; if not LocalGuildName or IsStringEmpty(LocalGuildName.Value) then return true; end
 			local PlayerStats = Player:FindFirstChild'leaderstats';
-			local PlayerLastName = PlayerStats and PlayerStats:FindFirstChild'LastName'; if not PlayerLastName then return false; end
+			local PlayerGuildName = PlayerStats and PlayerStats:FindFirstChild'Guild'; if not PlayerGuildName then return false; end
 
-			return PlayerLastName.Value == LocalLastName.Value;
+			return PlayerGuildName.Value == LocalGuildName.Value;
 		end;
 	};
     [5735553160] = {
 		CheckTeam = function(Player)
 			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
-			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
+			local LocalGuildName = LocalStats and LocalStats:FindFirstChild'Guild'; if not LocalGuildName or IsStringEmpty(LocalGuildName.Value) then return true; end
 			local PlayerStats = Player:FindFirstChild'leaderstats';
-			local PlayerLastName = PlayerStats and PlayerStats:FindFirstChild'LastName'; if not PlayerLastName then return false; end
+			local PlayerGuildName = PlayerStats and PlayerStats:FindFirstChild'Guild'; if not PlayerGuildName then return false; end
 
-			return PlayerLastName.Value == LocalLastName.Value;
+			return PlayerGuildName.Value == LocalGuildName.Value;
 		end;
 	};
 };
