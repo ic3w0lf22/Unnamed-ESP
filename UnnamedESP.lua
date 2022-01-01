@@ -162,6 +162,26 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return PlayerLastName.Value == LocalLastName.Value;
 		end;
 	};
+    [6032399813] = {
+		CheckTeam = function(Player)
+			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
+			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
+			local PlayerStats = Player:FindFirstChild'leaderstats';
+			local PlayerLastName = PlayerStats and PlayerStats:FindFirstChild'LastName'; if not PlayerLastName then return false; end
+
+			return PlayerLastName.Value == LocalLastName.Value;
+		end;
+	};
+    [5735553160] = {
+		CheckTeam = function(Player)
+			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
+			local LocalLastName = LocalStats and LocalStats:FindFirstChild'LastName'; if not LocalLastName or IsStringEmpty(LocalLastName.Value) then return true; end
+			local PlayerStats = Player:FindFirstChild'leaderstats';
+			local PlayerLastName = PlayerStats and PlayerStats:FindFirstChild'LastName'; if not PlayerLastName then return false; end
+
+			return PlayerLastName.Value == LocalLastName.Value;
+		end;
+	};
 };
 
 local RenderList = {Instances = {}};
@@ -463,6 +483,7 @@ local Modules = {
 			return Name;
 		end;
 	};
+
 	[4691401390] = { -- Vast Realm
 		CustomCharacter = function(Player)
 			if workspace:FindFirstChild'Players' then
@@ -470,6 +491,84 @@ local Modules = {
 			end
 		end
 	};
+
+    [6032399813] = { -- Deepwoken [Etrean]
+		CustomPlayerTag = function(Player)
+			local Name = '';
+            CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
+
+            if not IsStringEmpty(CharacterName) then
+                Name = ('\n[%s]'):format(CharacterName);
+                local Character = GetCharacter(Player);
+                local Extra = {};
+
+                if Character then
+                    local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
+
+                    if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
+                        table.insert(Extra, ('B%d'):format(Blood.Value));
+                    end
+
+                    if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
+                        table.insert(Extra, ('A%d'):format(Armor.Value));
+                    end
+                end
+
+                local BackpackChildren = Player.Backpack:GetChildren()
+
+                for index = 1, #BackpackChildren do
+                    local Oath = BackpackChildren[index]
+                    if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
+                        local OathName = Oath.Name:gsub('Talent:Oath: ', '')
+                        table.insert(Extra, OathName);
+                    end
+                end
+
+                if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
+            end
+
+			return Name;
+		end;
+	};
+
+    [5735553160] = { -- Deepwoken [Depths]
+    CustomPlayerTag = function(Player)
+        local Name = '';
+        CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
+
+        if not IsStringEmpty(CharacterName) then
+            Name = ('\n[%s]'):format(CharacterName);
+            local Character = GetCharacter(Player);
+            local Extra = {};
+
+            if Character then
+                local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
+
+                if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
+                    table.insert(Extra, ('B%d'):format(Blood.Value));
+                end
+
+                if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
+                    table.insert(Extra, ('A%d'):format(Armor.Value));
+                end
+            end
+
+            local BackpackChildren = Player.Backpack:GetChildren()
+
+            for index = 1, #BackpackChildren do
+                local Oath = BackpackChildren[index]
+                if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
+                    local OathName = Oath.Name:gsub('Talent:Oath: ', '')
+                    table.insert(Extra, OathName);
+                end
+            end
+
+            if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
+        end
+
+        return Name;
+    end;
+};
 };
 
 if Modules[game.PlaceId] ~= nil then
