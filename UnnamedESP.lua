@@ -48,7 +48,7 @@ local CurrentColorPicker;
 local Spectating;
 
 local Executor = (identifyexecutor or (function() return '' end))()
-local SupportedExploits = { 'Synapse X', 'ScriptWare', 'Krnl', 'OxygenU' }
+local SupportedExploits = { 'Temple', 'Synapse X', 'ScriptWare', 'Krnl', 'OxygenU' }
 local QUAD_SUPPORTED_EXPLOIT = table.find(SupportedExploits, Executor) ~= nil
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
