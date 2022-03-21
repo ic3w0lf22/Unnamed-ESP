@@ -2301,7 +2301,12 @@ local function UpdatePlayerData()
 
 			if Pass and Character then
 				local Humanoid = Character:FindFirstChildOfClass'Humanoid';
-				local Head = Character:FindFirstChild'Head';
+				local Head;
+				for _,bodypart in next, Character:GetChildren() do
+					if bodypart.Name == "Head" and not bodypart:IsA("Accessory") then
+						Head = bodypart;
+					end
+				end
 				local HumanoidRootPart = Character:FindFirstChild(CustomRootPartName or 'HumanoidRootPart')
 
 				local Dead = (Humanoid and Humanoid:GetState().Name == 'Dead')
