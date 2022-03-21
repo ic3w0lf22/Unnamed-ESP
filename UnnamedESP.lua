@@ -2086,7 +2086,13 @@ local function CheckPlayer(Player, Character)
 			Pass = false;
 		end
 
-		local Head = Character:FindFirstChild'Head';
+		local Head
+		for _,bodypart in next, Character:GetChildren() do
+			if bodypart.Name == "Head" and not bodypart:IsA("Accessory") then
+				Head = bodypart;
+				break
+			end
+		end
 
 		if Pass and Character and Head then
 			Distance = (Camera.CFrame.Position - Head.Position).Magnitude;
