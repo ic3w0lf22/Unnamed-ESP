@@ -1,5 +1,4 @@
-assert(Drawing, 'exploit not supported')
-
+if not Drawing then return end
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
 local UserInputService	= game:GetService'UserInputService';
@@ -86,7 +85,7 @@ end
 
 local function FromHex(HEX)
 	HEX = HEX:gsub('#', '');
-	
+
 	return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
 end
 
@@ -94,7 +93,7 @@ local function IsStringEmpty(String)
 	if type(String) == 'string' then
 		return String:match'^%s+$' ~= nil or #String == 0 or String == '' or false;
 	end
-	
+
 	return false;
 end
 
@@ -140,7 +139,7 @@ local CustomTeams = { -- Games that don't use roblox's team system
 		end;
 		CheckTeam = function(Player)
 			local LocalTeam = Teams.Sheriffs[LocalPlayer.Name] and Teams.Sheriffs or Teams.Bandits;
-			
+
 			return LocalTeam[Player.Name] and true or false;
 		end;
 	};
@@ -162,7 +161,7 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return PlayerLastName.Value == LocalLastName.Value;
 		end;
 	};
-    [6032399813] = {
+	[6032399813] = {
 		CheckTeam = function(Player)
 			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
 			local LocalGuildName = LocalStats and LocalStats:FindFirstChild'Guild'; if not LocalGuildName or IsStringEmpty(LocalGuildName.Value) then return true; end
@@ -172,7 +171,7 @@ local CustomTeams = { -- Games that don't use roblox's team system
 			return PlayerGuildName.Value == LocalGuildName.Value;
 		end;
 	};
-    [5735553160] = {
+	[5735553160] = {
 		CheckTeam = function(Player)
 			local LocalStats = LocalPlayer:FindFirstChild'leaderstats';
 			local LocalGuildName = LocalStats and LocalStats:FindFirstChild'Guild'; if not LocalGuildName or IsStringEmpty(LocalGuildName.Value) then return true; end
@@ -304,7 +303,7 @@ local Modules = {
 	-- 				local Main	= v:FindFirstChild'hitbox';
 	-- 				local Owner	= Properties:FindFirstChild'Owner';
 	-- 				local Money	= Properties:FindFirstChild'CurrentPrinted'
-					
+
 	-- 				if Main and Owner and Money then
 	-- 					local O = Owner.Value and tostring(Owner.Value) or 'no one';
 	-- 					local M = tostring(Money.Value);
@@ -458,7 +457,7 @@ local Modules = {
 					if Character:FindFirstChild'Vampirism' 		then table.insert(Extra, 'V');    end
 					if Character:FindFirstChild'Observe'			then table.insert(Extra, 'ILL');  end
 					if Character:FindFirstChild'Inferi'			then table.insert(Extra, 'NEC');  end
-					
+
 					if Character:FindFirstChild'World\'s Pulse' 	then table.insert(Extra, 'DZIN'); end
 					if Character:FindFirstChild'Head' and Character.Head:FindFirstChild'FacialMarking' then
 						local FM = Character.Head:FindFirstChild'FacialMarking';
@@ -492,83 +491,83 @@ local Modules = {
 		end
 	};
 
-    [6032399813] = { -- Deepwoken [Etrean]
+	[6032399813] = { -- Deepwoken [Etrean]
 		CustomPlayerTag = function(Player)
 			local Name = '';
-            CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
+			CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
 
-            if not IsStringEmpty(CharacterName) then
-                Name = ('\n[%s]'):format(CharacterName);
-                local Character = GetCharacter(Player);
-                local Extra = {};
+			if not IsStringEmpty(CharacterName) then
+				Name = ('\n[%s]'):format(CharacterName);
+				local Character = GetCharacter(Player);
+				local Extra = {};
 
-                if Character then
-                    local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
+				if Character then
+					local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
 
-                    if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
-                        table.insert(Extra, ('B%d'):format(Blood.Value));
-                    end
+					if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('B%d'):format(Blood.Value));
+					end
 
-                    if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
-                        table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
-                    end
-                end
+					if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
+					end
+				end
 
-                local BackpackChildren = Player.Backpack:GetChildren()
+				local BackpackChildren = Player.Backpack:GetChildren()
 
-                for index = 1, #BackpackChildren do
-                    local Oath = BackpackChildren[index]
-                    if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
-                        local OathName = Oath.Name:gsub('Talent:Oath: ', '')
-                        table.insert(Extra, OathName);
-                    end
-                end
+				for index = 1, #BackpackChildren do
+					local Oath = BackpackChildren[index]
+					if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
+						local OathName = Oath.Name:gsub('Talent:Oath: ', '')
+						table.insert(Extra, OathName);
+					end
+				end
 
-                if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
-            end
+				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
+			end
 
 			return Name;
 		end;
 	};
 
-    [5735553160] = { -- Deepwoken [Depths]
-    CustomPlayerTag = function(Player)
-        local Name = '';
-        CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
+	[5735553160] = { -- Deepwoken [Depths]
+		CustomPlayerTag = function(Player)
+			local Name = '';
+			CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
 
-        if not IsStringEmpty(CharacterName) then
-            Name = ('\n[%s]'):format(CharacterName);
-            local Character = GetCharacter(Player);
-            local Extra = {};
+			if not IsStringEmpty(CharacterName) then
+				Name = ('\n[%s]'):format(CharacterName);
+				local Character = GetCharacter(Player);
+				local Extra = {};
 
-            if Character then
-                local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
+				if Character then
+					local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
 
-                if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
-                    table.insert(Extra, ('B%d'):format(Blood.Value));
-                end
+					if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('B%d'):format(Blood.Value));
+					end
 
-                if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
-                    table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
-                end
-            end
+					if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
+					end
+				end
 
-            local BackpackChildren = Player.Backpack:GetChildren()
+				local BackpackChildren = Player.Backpack:GetChildren()
 
-            for index = 1, #BackpackChildren do
-                local Oath = BackpackChildren[index]
-                if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
-                    local OathName = Oath.Name:gsub('Talent:Oath: ', '')
-                    table.insert(Extra, OathName);
-                end
-            end
+				for index = 1, #BackpackChildren do
+					local Oath = BackpackChildren[index]
+					if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
+						local OathName = Oath.Name:gsub('Talent:Oath: ', '')
+						table.insert(Extra, OathName);
+					end
+				end
 
-            if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
-        end
+				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
+			end
 
-        return Name;
-    end;
-};
+			return Name;
+		end;
+	};
 };
 
 if Modules[game.PlaceId] ~= nil then
@@ -714,7 +713,7 @@ local Options = setmetatable({}, {
 
 function Load()
 	local _, Result = pcall(readfile, OptionsFile);
-	
+
 	if _ then -- extremely ugly code yea i know but i dont care p.s. i hate pcall
 		local _, Table = pcall(HttpService.JSONDecode, HttpService, Result);
 		if _ and typeof(Table) == 'table' then
@@ -817,10 +816,10 @@ Options('SaveSettings', 'Save Settings', function()
 	for i, v in pairs(Options) do
 		COptions[i] = v;
 	end
-	
+
 	if typeof(TeamColor) == 'Color3' then COptions.TeamColor = { R = TeamColor.R; G = TeamColor.G; B = TeamColor.B } end
 	if typeof(EnemyColor) == 'Color3' then COptions.EnemyColor = { R = EnemyColor.R; G = EnemyColor.G; B = EnemyColor.B } end
-	
+
 	if typeof(COptions.MenuKey.Value) == 'EnumItem' then COptions.MenuKey = COptions.MenuKey.Value.Name end
 	if typeof(COptions.ToggleKey.Value) == 'EnumItem' then COptions.ToggleKey = COptions.ToggleKey.Value.Name end
 
@@ -869,10 +868,10 @@ function LineBox:Create(Properties)
 
 		if shared.am_ic3 and typeof(Parts) == 'table' then
 			local AllCorners = {};
-			
+
 			for i, v in pairs(Parts) do
 				-- if not v:IsA'BasePart' then continue end
-				
+
 				local CF, Size = v.CFrame, v.Size;
 				-- CF, Size = v.Parent:GetBoundingBox();
 
@@ -935,7 +934,7 @@ function LineBox:Create(Properties)
 
 			return
 		end
-		
+
 		local TLPos, Visible1	= WorldToViewport((CF * CFrame.new( Size.X,  Size.Y, 0)).Position);
 		local TRPos, Visible2	= WorldToViewport((CF * CFrame.new(-Size.X,  Size.Y, 0)).Position);
 		local BLPos, Visible3	= WorldToViewport((CF * CFrame.new( Size.X, -Size.Y, 0)).Position);
@@ -1048,47 +1047,46 @@ local Colors = {
 };
 
 function Connections:Listen(Connection, Function)
-    local NewConnection = Connection:Connect(Function);
-    table.insert(self.Active, NewConnection);
-    return NewConnection;
+	local NewConnection = Connection:Connect(Function);
+	table.insert(self.Active, NewConnection);
+	return NewConnection;
 end
 
 function Connections:DisconnectAll()
-    for Index, Connection in pairs(self.Active) do
-        if Connection.Connected then
-            Connection:Disconnect();
-        end
-    end
-    
-    self.Active = {};
+	for Index, Connection in pairs(self.Active) do
+		if Connection.Connected then
+			Connection:Disconnect();
+		end
+	end
+
+	self.Active = {};
 end
 
 function Signal.new()
 	local self = setmetatable({ _BindableEvent = Instance.new'BindableEvent' }, Signal);
-    
+
 	return self;
 end
 
 function Signal:Connect(Callback)
-    assert(typeof(Callback) == 'function', 'function expected; got ' .. typeof(Callback));
-
-	return self._BindableEvent.Event:Connect(function(...) Callback(...) end);
+	assert(typeof(Callback) == 'function', 'function expected; got ' .. typeof(Callback))
+	return self._BindableEvent.Event:Connect(function(...) Callback(...) end)
 end
 
 function Signal:Fire(...)
-    self._BindableEvent:Fire(...);
+	self._BindableEvent:Fire(...);
 end
 
 function Signal:Wait()
-    local Arguments = self._BindableEvent:Wait();
+	local Arguments = self._BindableEvent:Wait();
 
-    return Arguments;
+	return Arguments;
 end
 
 function Signal:Disconnect()
-    if self._BindableEvent then
-        self._BindableEvent:Destroy();
-    end
+	if self._BindableEvent then
+		self._BindableEvent:Destroy();
+	end
 end
 
 local function GetMouseLocation()
@@ -1098,9 +1096,9 @@ end
 local function IsMouseOverDrawing(Drawing, MousePosition)
 	local TopLeft = Drawing.Position;
 	local BottomRight = Drawing.Position + Drawing.Size;
-    local MousePosition = MousePosition or GetMouseLocation();
-    
-    return MousePosition.X > TopLeft.X and MousePosition.Y > TopLeft.Y and MousePosition.X < BottomRight.X and MousePosition.Y < BottomRight.Y;
+	local MousePosition = MousePosition or GetMouseLocation();
+
+	return MousePosition.X > TopLeft.X and MousePosition.Y > TopLeft.Y and MousePosition.X < BottomRight.X and MousePosition.Y < BottomRight.Y;
 end
 
 local ImageCache = {};
@@ -1112,97 +1110,97 @@ local function SetImage(Drawing, Url)
 
 	Drawing[IsSynapse and 'Data' or 'Uri'] = ImageCache[Url] or Data;
 	ImageCache[Url] = Data;
-    
-    if not IsSynapse then repeat wait() until Drawing.Loaded; end
+
+	if not IsSynapse then repeat wait() until Drawing.Loaded; end
 end
 
 -- oh god unnamed esp needs an entire rewrite, someone make a better one pls im too lazy
 -- btw the color picker was made seperately so it doesnt fit with the code of unnamed esp
 
 local function CreateDrawingsTable()
-    local Drawings = { __Objects = {} };
-    local Metatable = {};
+	local Drawings = { __Objects = {} };
+	local Metatable = {};
 
-    function Metatable.__index(self, Index)
-        local Object = rawget(self.__Objects, Index);
-        
-        if not Object or (IsSynapse and not Object.__SELF.__OBJECT_EXISTS) then
-            local Type = Index:sub(1, Index:find'-' - 1);
+	function Metatable.__index(self, Index)
+		local Object = rawget(self.__Objects, Index);
 
-            Success, Object = pcall(Drawing.new, Type);
+		if not Object or (IsSynapse and not Object.__SELF.__OBJECT_EXISTS) then
+			local Type = Index:sub(1, Index:find'-' - 1);
 
-            if not Object or not Success then return function() end; end
+			Success, Object = pcall(Drawing.new, Type);
 
-            self.__Objects[Index] = setmetatable({ __SELF = Object; Type = Type }, {
-                __call = function(self, Properties)
-                    local Object = rawget(self, '__SELF'); if IsSynapse and not Object.__OBJECT_EXISTS then return false, 'render object destroyed'; end
+			if not Object or not Success then return function() end; end
 
-                    if Properties == false then
-                        Object.Visible = false;
-                        Object.Transparency = 0;
-                        Object:Remove();
-                        
-                        return true;
-                    end
-                    
-                    if typeof(Properties) == 'table' then
-                        for Property, Value in pairs(Properties) do
-                            local CanSet = true;
+			self.__Objects[Index] = setmetatable({ __SELF = Object; Type = Type }, {
+				__call = function(self, Properties)
+					local Object = rawget(self, '__SELF'); if IsSynapse and not Object.__OBJECT_EXISTS then return false, 'render object destroyed'; end
 
-                            if self.Type == 'Image' and not IsSynapse and Property == 'Size' and typeof(Value) == 'Vector2' then
-                                CanSet = false;
+					if Properties == false then
+						Object.Visible = false;
+						Object.Transparency = 0;
+						Object:Remove();
 
-                                spawn(function()
-                                    repeat wait() until Object.Loaded;
-                                    if not self.DefaultSize then rawset(self, 'DefaultSize', Object.Size) end
+						return true;
+					end
 
-                                    Property = 'ScaleFactor';
-                                    Value = Value.X / self.DefaultSize.X;
+					if typeof(Properties) == 'table' then
+						for Property, Value in pairs(Properties) do
+							local CanSet = true;
 
-                                    Object[Property] = Value
-                                end)
-                            end
-                            
-                            if CanSet then Object[Property] = Value end
-                        end
-                    end
+							if self.Type == 'Image' and not IsSynapse and Property == 'Size' and typeof(Value) == 'Vector2' then
+								CanSet = false;
 
-                    return Object;
-                end
-            });
+								spawn(function()
+									repeat wait() until Object.Loaded;
+									if not self.DefaultSize then rawset(self, 'DefaultSize', Object.Size) end
 
-            Object.Visible = true;
-            Object.Transparency = 1; -- Transparency is really Opacity with drawing api (1 being visible, 0 being invisible)
-            
-            if Type == 'Text' then
-                if Drawing.Fonts then Object.Font = Drawing.Fonts.Monospace end
-                Object.Size = 20;
-                Object.Color = Color3.new(1, 1, 1);
-                Object.Center = true;
+									Property = 'ScaleFactor';
+									Value = Value.X / self.DefaultSize.X;
+
+									Object[Property] = Value
+								end)
+							end
+
+							if CanSet then Object[Property] = Value end
+						end
+					end
+
+					return Object;
+				end
+			});
+
+			Object.Visible = true;
+			Object.Transparency = 1; -- Transparency is really Opacity with drawing api (1 being visible, 0 being invisible)
+
+			if Type == 'Text' then
+				if Drawing.Fonts then Object.Font = Drawing.Fonts.Monospace end
+				Object.Size = 20;
+				Object.Color = Color3.new(1, 1, 1);
+				Object.Center = true;
 				Object.Outline = true;
 				OutlineOpacity = 0.5;
-            elseif Type == 'Square' or Type == 'Rectangle' then
-                Object.Thickness = 2;
-                Object.Filled = false;
-            end
+			elseif Type == 'Square' or Type == 'Rectangle' then
+				Object.Thickness = 2;
+				Object.Filled = false;
+			end
 
-            return self.__Objects[Index];
-        end
+			return self.__Objects[Index];
+		end
 
-        return Object;
-    end
+		return Object;
+	end
 
-    function Metatable.__call(self, Delete, ...)
-        local Arguments = {Delete, ...};
-        
-        if Delete == false then
-            for Index, Drawing in pairs(rawget(self, '__Objects')) do
-                Drawing(false);
-            end
-        end
-    end
+	function Metatable.__call(self, Delete, ...)
+		local Arguments = {Delete, ...};
 
-    return setmetatable(Drawings, Metatable);
+		if Delete == false then
+			for Index, Drawing in pairs(rawget(self, '__Objects')) do
+				Drawing(false);
+			end
+		end
+	end
+
+	return setmetatable(Drawings, Metatable);
 end
 
 local Images = {};
@@ -1216,142 +1214,142 @@ function ColorPicker.new(Position, Size, Color)
 	ColorPicker.LastGenerated = tick();
 	ColorPicker.Loading = true;
 
-    local Picker = { Color = Color or Color3.new(1, 1, 1); HSV = { H = 0, S = 1, V = 1 } };
-    local Drawings = CreateDrawingsTable();
-    local Position = Position or V2New();
-    local Size = Size or 150;
-    local Padding = { 10, 10, 10, 10 };
-    
-    Picker.ColorChanged = Signal.new();
+	local Picker = { Color = Color or Color3.new(1, 1, 1); HSV = { H = 0, S = 1, V = 1 } };
+	local Drawings = CreateDrawingsTable();
+	local Position = Position or V2New();
+	local Size = Size or 150;
+	local Padding = { 10, 10, 10, 10 };
 
-    local Background = Drawings['Square-Background'] {
-        Color = Color3.fromRGB(33, 33, 33);
+	Picker.ColorChanged = Signal.new();
+
+	local Background = Drawings['Square-Background'] {
+		Color = Color3.fromRGB(33, 33, 33);
 		Filled = false;
 		Visible = false;
-        Position = Position - V2New(Padding[4], Padding[1]);
-        Size = V2New(Size, Size) + V2New(Padding[4] + Padding[2], Padding[1] + Padding[3]);
-    };
-    local ColorPreview = Drawings['Circle-Preview'] {
-        Position = Position + (V2New(Size, Size) / 2);
-        Radius = Size / 2 - 8;
-        Filled = true;
-        Thickness = 0;
-        NumSides = 20;
-        Color = Color3.new(1, 0, 0);
-    };
-    local Main = Drawings['Image-Main'] {
-        Position = Position;
-        Size = V2New(Size, Size);
-    }; SetImage(Main, Images.Ring);
-    local Preview = Drawings['Square-Preview'] {
-        Position = Main.Position + (Main.Size / 4.5);
-        Size = Main.Size / 1.75;
-        Color = Color3.new(1, 0, 0);
-        Filled = true;
-        Thickness = 0;
-    };
-    local Overlay = Drawings['Image-Overlay'] {
-        Position = Preview.Position;
-        Size = Preview.Size;
-        Transparency = 1;
-    }; SetImage(Overlay, Images.Overlay);
-    local CursorOutline = Drawings['Circle-CursorOutline'] {
-        Radius = 4;
-        Thickness = 2;
-        Filled = false;
-        Color = Color3.new(0.2, 0.2, 0.2);
-        Position = V2New(Main.Position.X + Main.Size.X - 10, Main.Position.Y + (Main.Size.Y / 2));
-    };
-    local Cursor = Drawings['Circle-Cursor'] {
-        Radius = 3;
-        Transparency = 1;
-        Filled = true;
-        Color = Color3.new(1, 1, 1);
-        Position = CursorOutline.Position;
-    };
-    local CursorOutline = Drawings['Circle-CursorOutlineSquare'] {
-        Radius = 4;
-        Thickness = 2;
-        Filled = false;
-        Color = Color3.new(0.2, 0.2, 0.2);
-        Position = V2New(Preview.Position.X + Preview.Size.X - 2, Preview.Position.Y + 2);
-    };
-    Drawings['Circle-CursorSquare'] {
-        Radius = 3;
-        Transparency = 1;
-        Filled = true;
-        Color = Color3.new(1, 1, 1);
-        Position = CursorOutline.Position;
-    };
-    
-    function Picker:UpdatePosition(Input)
-        local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
+		Position = Position - V2New(Padding[4], Padding[1]);
+		Size = V2New(Size, Size) + V2New(Padding[4] + Padding[2], Padding[1] + Padding[3]);
+	};
+	local ColorPreview = Drawings['Circle-Preview'] {
+		Position = Position + (V2New(Size, Size) / 2);
+		Radius = Size / 2 - 8;
+		Filled = true;
+		Thickness = 0;
+		NumSides = 20;
+		Color = Color3.new(1, 0, 0);
+	};
+	local Main = Drawings['Image-Main'] {
+		Position = Position;
+		Size = V2New(Size, Size);
+	}; SetImage(Main, Images.Ring);
+	local Preview = Drawings['Square-Preview'] {
+		Position = Main.Position + (Main.Size / 4.5);
+		Size = Main.Size / 1.75;
+		Color = Color3.new(1, 0, 0);
+		Filled = true;
+		Thickness = 0;
+	};
+	local Overlay = Drawings['Image-Overlay'] {
+		Position = Preview.Position;
+		Size = Preview.Size;
+		Transparency = 1;
+	}; SetImage(Overlay, Images.Overlay);
+	local CursorOutline = Drawings['Circle-CursorOutline'] {
+		Radius = 4;
+		Thickness = 2;
+		Filled = false;
+		Color = Color3.new(0.2, 0.2, 0.2);
+		Position = V2New(Main.Position.X + Main.Size.X - 10, Main.Position.Y + (Main.Size.Y / 2));
+	};
+	local Cursor = Drawings['Circle-Cursor'] {
+		Radius = 3;
+		Transparency = 1;
+		Filled = true;
+		Color = Color3.new(1, 1, 1);
+		Position = CursorOutline.Position;
+	};
+	local CursorOutline = Drawings['Circle-CursorOutlineSquare'] {
+		Radius = 4;
+		Thickness = 2;
+		Filled = false;
+		Color = Color3.new(0.2, 0.2, 0.2);
+		Position = V2New(Preview.Position.X + Preview.Size.X - 2, Preview.Position.Y + 2);
+	};
+	Drawings['Circle-CursorSquare'] {
+		Radius = 3;
+		Transparency = 1;
+		Filled = true;
+		Color = Color3.new(1, 1, 1);
+		Position = CursorOutline.Position;
+	};
 
-        if self.MouseHeld then
-            if self.Item == 'Ring' then
-                local Main = self.Drawings['Image-Main'] ();
-                local Preview = self.Drawings['Square-Preview'] ();
-                local Bounds = Main.Size / 2;
-                local Center = Main.Position + Bounds;
-                local Relative = MousePosition - Center;
-                local Direction = Relative.unit;
-                local Position = Center + Direction * Main.Size.X / 2.15;
-                local H = (math.atan2(Position.Y - Center.Y, Position.X - Center.X)) * 60;
-                if H < 0 then H = 360 + H; end
-                H = H / 360;
-                self.HSV.H = H;
-                local EndColor = Color3.fromHSV(H, self.HSV.S, self.HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
-                local Pointer = self.Drawings['Circle-Cursor'] { Position = Position };
-                self.Drawings['Circle-CursorOutline'] { Position = Pointer.Position };
-                Bounds = Bounds * 2;
-                Preview.Color = Color3.fromHSV(H, 1, 1);
-                self.Color = EndColor;
-                self.Drawings['Circle-Preview'] { Color = EndColor };
-            elseif self.Item == 'HL' then
-                local Preview = self.Drawings['Square-Preview'] ();
-                local HSV = self.HSV;
-                local Position = V2New(math.clamp(MousePosition.X, Preview.Position.X, Preview.Position.X + Preview.Size.X), math.clamp(MousePosition.Y, Preview.Position.Y, Preview.Position.Y + Preview.Size.Y));
-                HSV.S = (Position.X - Preview.Position.X) / Preview.Size.X;
-                HSV.V = 1 - (Position.Y - Preview.Position.Y) / Preview.Size.Y;
-                local EndColor = Color3.fromHSV(HSV.H, HSV.S, HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
-                self.Color = EndColor;
-                self.Drawings['Circle-Preview'] { Color = EndColor };
-                local Pointer = self.Drawings['Circle-CursorSquare'] { Position = Position };
-                self.Drawings['Circle-CursorOutlineSquare'] { Position = Pointer.Position };
-            end
-        end
-    end
+	function Picker:UpdatePosition(Input)
+		local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
 
-    function Picker:HandleInput(Input, P, Type)
-        if Type == 'Began' then
-            if Input.UserInputType.Name == 'MouseButton1' then
-                local Main = self.Drawings['Image-Main'] ();
-                local SquareSV = self.Drawings['Square-Preview'] ();
-                local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
-                self.MouseHeld = true;
-                local Bounds = Main.Size / 2;
-                local Center = Main.Position + Bounds;
-                local R = (MousePosition - Center);
-        
-                if R.Magnitude < Bounds.X and R.Magnitude > Bounds.X - 20 then
-                    self.Item = 'Ring';
-                end
-                
-                if MousePosition.X > SquareSV.Position.X and MousePosition.Y > SquareSV.Position.Y and MousePosition.X < SquareSV.Position.X + SquareSV.Size.X and MousePosition.Y < SquareSV.Position.Y + SquareSV.Size.Y then
-                    self.Item = 'HL';
-                end
-
-                self:UpdatePosition(Input, P);
-            end
-        elseif Type == 'Changed' then
-            if Input.UserInputType.Name == 'MouseMovement' then
-                self:UpdatePosition(Input, P);
-            end
-        elseif Type == 'Ended' and Input.UserInputType.Name == 'MouseButton1' then
-            self.Item = nil;
-        end
+		if self.MouseHeld then
+			if self.Item == 'Ring' then
+				local Main = self.Drawings['Image-Main'] ();
+				local Preview = self.Drawings['Square-Preview'] ();
+				local Bounds = Main.Size / 2;
+				local Center = Main.Position + Bounds;
+				local Relative = MousePosition - Center;
+				local Direction = Relative.unit;
+				local Position = Center + Direction * Main.Size.X / 2.15;
+				local H = (math.atan2(Position.Y - Center.Y, Position.X - Center.X)) * 60;
+				if H < 0 then H = 360 + H; end
+				H = H / 360;
+				self.HSV.H = H;
+				local EndColor = Color3.fromHSV(H, self.HSV.S, self.HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
+				local Pointer = self.Drawings['Circle-Cursor'] { Position = Position };
+				self.Drawings['Circle-CursorOutline'] { Position = Pointer.Position };
+				Bounds = Bounds * 2;
+				Preview.Color = Color3.fromHSV(H, 1, 1);
+				self.Color = EndColor;
+				self.Drawings['Circle-Preview'] { Color = EndColor };
+			elseif self.Item == 'HL' then
+				local Preview = self.Drawings['Square-Preview'] ();
+				local HSV = self.HSV;
+				local Position = V2New(math.clamp(MousePosition.X, Preview.Position.X, Preview.Position.X + Preview.Size.X), math.clamp(MousePosition.Y, Preview.Position.Y, Preview.Position.Y + Preview.Size.Y));
+				HSV.S = (Position.X - Preview.Position.X) / Preview.Size.X;
+				HSV.V = 1 - (Position.Y - Preview.Position.Y) / Preview.Size.Y;
+				local EndColor = Color3.fromHSV(HSV.H, HSV.S, HSV.V); if EndColor ~= self.Color then self.ColorChanged:Fire(self.Color); end
+				self.Color = EndColor;
+				self.Drawings['Circle-Preview'] { Color = EndColor };
+				local Pointer = self.Drawings['Circle-CursorSquare'] { Position = Position };
+				self.Drawings['Circle-CursorOutlineSquare'] { Position = Pointer.Position };
+			end
+		end
 	end
-	
+
+	function Picker:HandleInput(Input, P, Type)
+		if Type == 'Began' then
+			if Input.UserInputType.Name == 'MouseButton1' then
+				local Main = self.Drawings['Image-Main'] ();
+				local SquareSV = self.Drawings['Square-Preview'] ();
+				local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
+				self.MouseHeld = true;
+				local Bounds = Main.Size / 2;
+				local Center = Main.Position + Bounds;
+				local R = (MousePosition - Center);
+
+				if R.Magnitude < Bounds.X and R.Magnitude > Bounds.X - 20 then
+					self.Item = 'Ring';
+				end
+
+				if MousePosition.X > SquareSV.Position.X and MousePosition.Y > SquareSV.Position.Y and MousePosition.X < SquareSV.Position.X + SquareSV.Size.X and MousePosition.Y < SquareSV.Position.Y + SquareSV.Size.Y then
+					self.Item = 'HL';
+				end
+
+				self:UpdatePosition(Input, P);
+			end
+		elseif Type == 'Changed' then
+			if Input.UserInputType.Name == 'MouseMovement' then
+				self:UpdatePosition(Input, P);
+			end
+		elseif Type == 'Ended' and Input.UserInputType.Name == 'MouseButton1' then
+			self.Item = nil;
+		end
+	end
+
 	function Picker:Dispose()
 		self.Drawings(false);
 		self.UpdatePosition = nil;
@@ -1378,7 +1376,7 @@ function ColorPicker.new(Position, Size, Color)
 	end);
 	Connections:Listen(UserInputService.InputEnded, function(Input, Process)
 		Picker:HandleInput(Input, Process, 'Ended');
-		
+
 		if Input.UserInputType.Name == 'MouseButton1' then
 			Picker.MouseHeld = false;
 		end
@@ -1386,8 +1384,8 @@ function ColorPicker.new(Position, Size, Color)
 
 	ColorPicker.Loading = false;
 
-    Picker.Drawings = Drawings;
-    return Picker;
+	Picker.Drawings = Drawings;
+	return Picker;
 end
 
 function SubMenu:Show(Position, Title, Options)
@@ -1717,7 +1715,7 @@ function CreateMenu(NewPosition) -- Create Menu
 			-- local Value = Size * (Percent / 100); -- this shit's inaccurate but fuck it i'm not even gonna bother fixing it
 
 			Slider.Position = Line.Position + V2New(35, 0);
-			
+
 			v.BaseSize = BaseSize;
 			v.BasePosition = BasePosition;
 			-- AMT.Position = BasePosition + V2New(BaseSize.X - AMT.TextBounds.X - 10, -10)
@@ -1963,10 +1961,10 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 				if Player ~= LocalPlayer and Player ~= Spectating and Character and Character:FindFirstChild'HumanoidRootPart' then
 					local Head = Character:FindFirstChild'Head';
 					local Humanoid = Character:FindFirstChildOfClass'Humanoid';
-					
+
 					if Head then
 						local Distance  = (Camera.CFrame.Position - Head.Position).Magnitude;
-						
+
 						if Distance > Options.MaxDistance.Value then continue; end
 
 						local Direction = -(Camera.CFrame.Position - Mouse.Hit.Position).unit;
@@ -1983,7 +1981,7 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 					end
 				end
 			end
-			
+
 			if LPlayer and LPlayer ~= Spectating and LCharacter then
 				Camera.CameraSubject = LCharacter.Head;
 				Spectating = LPlayer;
@@ -2045,7 +2043,7 @@ local function CheckRay(Instance, Distance, Position, Unit)
 	if not Model then return false end
 
 	local _Ray = Ray.new(Position, Unit * Distance);
-	
+
 	local List = {LocalPlayer.Character, Camera, Mouse.TargetFilter};
 
 	for i,v in pairs(IgnoreList) do table.insert(List, v); end;
@@ -2170,12 +2168,12 @@ local function UpdatePlayerData()
 					local ScreenPosition, Vis = WorldToViewport(v.Instance.Position);
 					local Color = v.Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(v.Instance.Position);
-					
+
 					if ScreenPosition.Z < 0 then
 						local AT = math.atan2(OPos.Y, OPos.X) + math.pi;
 						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(V3New(0, 0, -1))));
 					end
-					
+
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
@@ -2196,7 +2194,7 @@ local function UpdatePlayerData()
 
 					if ScreenPosition.Z > 0 then
 						local ScreenPositionUpper = ScreenPosition;
-						
+
 						if Options.ShowName.Value then
 							LocalPlayer.NameDisplayDistance = 0;
 							NameTag.Visible		= true;
@@ -2307,12 +2305,12 @@ local function UpdatePlayerData()
 					local ScreenPosition, Vis = WorldToViewport(Head.Position);
 					local Color = Rainbow and Color3.fromHSV(tick() * 128 % 255/255, 1, 1) or (CheckTeam(v) and TeamColor or EnemyColor); Color = Options.ShowTeamColor.Value and v.TeamColor.Color or Color;
 					local OPos = Camera.CFrame:pointToObjectSpace(Head.Position);
-					
+
 					if ScreenPosition.Z < 0 then
 						local AT = math.atan2(OPos.Y, OPos.X) + math.pi;
 						OPos = CFrame.Angles(0, 0, AT):vectorToWorldSpace((CFrame.Angles(0, math.rad(89.9), 0):vectorToWorldSpace(V3New(0, 0, -1))));
 					end
-					
+
 					local Position = WorldToViewport(Camera.CFrame:pointToWorldSpace(OPos));
 
 					if Options.ShowTracers.Value then
@@ -2333,7 +2331,7 @@ local function UpdatePlayerData()
 						Tracer.Visible = false;
 						OutlineTracer.Visible = false;
 					end
-					
+
 					if ScreenPosition.Z > 0 then
 						local ScreenPositionUpper	= WorldToViewport((HumanoidRootPart:GetRenderCFrame() * CFrame.new(0, Head.Size.Y + HumanoidRootPart.Size.Y + (Options.YOffset.Value / 25), 0)).Position);
 						local Scale					= Head.Size.Y / 2;
@@ -2374,7 +2372,7 @@ local function UpdatePlayerData()
 									Str = Str .. Format('[%d/%d] [%s%%]', Humanoid.Health, Humanoid.MaxHealth, math.floor(Humanoid.Health / Humanoid.MaxHealth * 100));
 								elseif type(GetHealth) == 'function' then
 									local health, maxHealth = GetHealth(v)
-									
+
 									if type(health) == 'number' and type(maxHealth) == 'number' then
 										Str = Str .. Format('[%d/%d] [%s%%]', health, maxHealth, math.floor(health / maxHealth * 100))
 									end
@@ -2415,7 +2413,7 @@ local function UpdatePlayerData()
 						NameTag.Visible			= false;
 						DistanceTag.Visible		= false;
 						HeadDot.Visible			= false;
-						
+
 						Box:SetVisible(false);
 					end
 				else
@@ -2424,7 +2422,7 @@ local function UpdatePlayerData()
 					HeadDot.Visible			= false;
 					Tracer.Visible			= false;
 					OutlineTracer.Visible 	= false;
-					
+
 					Box:SetVisible(false);
 				end
 			else
@@ -2479,7 +2477,7 @@ local function Update()
 
 	local CX = Menu:GetInstance'CrosshairX';
 	local CY = Menu:GetInstance'CrosshairY';
-	
+
 	if Options.Crosshair.Value then
 		CX.Visible = true;
 		CY.Visible = true;
@@ -2497,17 +2495,17 @@ local function Update()
 		local MLocation = GetMouseLocation();
 		shared.MenuDrawingData.Instances.Main.Color = Color3.fromHSV(tick() * 24 % 255/255, 1, 1);
 		local MainInstance = Menu:GetInstance'Main';
-		
+
 		local Values = {
 			MainInstance.Position.X;
 			MainInstance.Position.Y;
 			MainInstance.Position.X + MainInstance.Size.X;
 			MainInstance.Position.Y + MainInstance.Size.Y;
 		};
-		
+
 		if MainInstance and (MouseHoveringOver(Values) or (SubMenu.Open and MouseHoveringOver(SubMenu.Bounds))) then
 			Debounce.CursorVis = true;
-			
+
 			Menu:UpdateMenuInstance'Cursor1'{
 				Visible	= true;
 				From	= V2New(MLocation.x, MLocation.y);
@@ -2526,7 +2524,7 @@ local function Update()
 		else
 			if Debounce.CursorVis then
 				Debounce.CursorVis = false;
-				
+
 				Menu:UpdateMenuInstance'Cursor1'{Visible = false};
 				Menu:UpdateMenuInstance'Cursor2'{Visible = false};
 				Menu:UpdateMenuInstance'Cursor3'{Visible = false};
