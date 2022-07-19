@@ -47,7 +47,7 @@ local GetCharacter;
 local CurrentColorPicker;
 local Spectating;
 
-local QUAD_SUPPORTED_EXPLOIT = pcall(function() _quad = Drawing.new'Quad'; _quad:Remove(); end)
+local QUAD_SUPPORTED_EXPLOIT = pcall(function() _quad = Drawing.new'Quad'; _quad:Remove(); end);
 
 -- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
 
