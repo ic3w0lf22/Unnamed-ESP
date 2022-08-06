@@ -2390,7 +2390,7 @@ local function UpdatePlayerData()
 						if Options.ShowDot.Value and Vis then
 							local Top			= WorldToViewport((Head.CFrame * CFrame.new(0, Scale, 0)).Position);
 							local Bottom		= WorldToViewport((Head.CFrame * CFrame.new(0, -Scale, 0)).Position);
-							local Radius		= (Top - Bottom).y;
+							local Radius		= math.abs((Top - Bottom).Y);
 
 							HeadDot.Visible		= true;
 							HeadDot.Color		= Color;
