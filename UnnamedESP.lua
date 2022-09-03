@@ -532,53 +532,74 @@ local Modules = {
 	};
 
     [5735553160] = { -- Deepwoken [Depths]
-    CustomPlayerTag = function(Player)
-        local Name = '';
-        CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
+		CustomPlayerTag = function(Player)
+			local Name = '';
+			CharacterName = Player:GetAttribute'CharacterName'; -- could use leaderstats but lazy
 
-        if not IsStringEmpty(CharacterName) then
-            Name = ('\n[%s]'):format(CharacterName);
-            local Character = GetCharacter(Player);
-            local Extra = {};
+			if not IsStringEmpty(CharacterName) then
+				Name = ('\n[%s]'):format(CharacterName);
+				local Character = GetCharacter(Player);
+				local Extra = {};
 
-            if Character then
-                local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
+				if Character then
+					local Blood, Armor = Character:FindFirstChild('Blood'), Character:FindFirstChild('Armor');
 
-                if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
-                    table.insert(Extra, ('B%d'):format(Blood.Value));
-                end
+					if Blood and Blood.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('B%d'):format(Blood.Value));
+					end
 
-                if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
-                    table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
-                end
-            end
+					if Armor and Armor.ClassName == 'DoubleConstrainedValue' then
+						table.insert(Extra, ('A%d'):format(math.floor(Armor.Value / 10)));
+					end
+				end
 
-            local BackpackChildren = Player.Backpack:GetChildren()
+				local BackpackChildren = Player.Backpack:GetChildren()
 
-            for index = 1, #BackpackChildren do
-                local Oath = BackpackChildren[index]
-                if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
-                    local OathName = Oath.Name:gsub('Talent:Oath: ', '')
-                    table.insert(Extra, OathName);
-                end
-            end
+				for index = 1, #BackpackChildren do
+					local Oath = BackpackChildren[index]
+					if Oath.ClassName == 'Folder' and Oath.Name:find('Talent:Oath') then
+						local OathName = Oath.Name:gsub('Talent:Oath: ', '')
+						table.insert(Extra, OathName);
+					end
+				end
 
-            if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
-        end
+				if #Extra > 0 then Name = Name .. ' [' .. table.concat(Extra, '-') .. ']'; end
+			end
 
-        return Name;
-    end;
+			return Name;
+		end;
+	};
+
+	[3127094264] = {
+		CustomCharacter = function(Player)
+			if not _FIRST then
+				_FIRST = true
+				
+				pcall(function()
+					local GPM = rawget(require(LocalPlayer.PlayerScripts:WaitForChild('Client', 1e9):WaitForChild('Player', 1e9)), 'GetPlayerModel')
+					PList = debug.getupvalue(GPM, 1)
+				end)
+			end
+
+			if PList then
+				local Player = PList[Player.UserId]
+
+				if Player and Player.model then
+					return Player.model
+				end
+			end
+		end
+	}
 };
-};
 
-if Modules[game.PlaceId] ~= nil then
-	local Module = Modules[game.PlaceId];
-	CustomPlayerTag = Module.CustomPlayerTag or nil;
-	CustomESP = Module.CustomESP or nil;
-	CustomCharacter = Module.CustomCharacter or nil;
-	GetHealth = Module.GetHealth or nil;
-	GetAliveState = Module.GetAliveState or nil;
-	CustomRootPartName = Module.CustomRootPartName or nil;
+if Modules[game.PlaceId] ~= nil or Modules[game.GameId] ~= nil then
+	local Module = Modules[game.PlaceId] or Modules[game.GameId]
+	CustomPlayerTag = Module.CustomPlayerTag or nil
+	CustomESP = Module.CustomESP or nil
+	CustomCharacter = Module.CustomCharacter or nil
+	GetHealth = Module.GetHealth or nil
+	GetAliveState = Module.GetAliveState or nil
+	CustomRootPartName = Module.CustomRootPartName or nil
 end
 
 function GetCharacter(Player)
