@@ -2045,6 +2045,8 @@ local function ToggleMenu()
 	end
 end
 
+local LastRayIgnoreUpdate, RayIgnoreList = 0, {}
+
 local function CheckRay(Instance, Distance, Position, Unit)
 	local Pass = true;
 	local Model = Instance;
@@ -2065,18 +2067,34 @@ local function CheckRay(Instance, Distance, Position, Unit)
 
 	if not Model then return false end
 
-	local _Ray = Ray.new(Position, Unit * Distance);
-	
-	local List = {LocalPlayer.Character, Camera, Mouse.TargetFilter};
+	local _Ray = Ray.new(Position, Unit * Distance)
 
-	for i,v in pairs(IgnoreList) do table.insert(List, v); end;
+	if tick() - LastRayIgnoreUpdate > 3 then
+		LastRayIgnoreUpdate = tick()
 
-	local Hit = workspace:FindPartOnRayWithIgnoreList(_Ray, List);
+		table.clear(RayIgnoreList)
+
+		table.insert(RayIgnoreList, LocalPlayer.Character)
+		table.insert(RayIgnoreList, Camera)
+		
+		if Mouse.TargetFilter then table.insert(RayIgnoreList, Mouse.TargetFilter) end
+
+		if #IgnoreList > 64 then
+			while #IgnoreList > 64 do
+				table.remove(IgnoreList, 1)
+			end
+		end
+
+		for i, v in pairs(IgnoreList) do table.insert(RayIgnoreList, v) end
+	end
+
+	local Hit = workspace:FindPartOnRayWithIgnoreList(_Ray, RayIgnoreList)
 
 	if Hit and not Hit:IsDescendantOf(Model) then
 		Pass = false;
 		if Hit.Transparency >= .3 or not Hit.CanCollide and Hit.ClassName ~= Terrain then -- Detect invisible walls
-			IgnoreList[#IgnoreList + 1] = Hit;
+			table.insert(IgnoreList, Hit)
+			-- IgnoreList[#IgnoreList + 1] = Hit;
 		end
 	end
 
