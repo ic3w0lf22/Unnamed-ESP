@@ -582,7 +582,7 @@ local Modules = {
 			end
 
 			if PList then
-				local Player = PList[Player.UserId]
+				local Player = rawget(PList, Player.UserId)
 
 				if Player and Player.model then
 					return Player.model
