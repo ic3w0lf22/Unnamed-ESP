@@ -2,6 +2,8 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
+if not cloneref then cloneref = function(o) return o end end
+
 local UserInputService	= cloneref(game:GetService'UserInputService');
 local HttpService	= cloneref(game:GetService'HttpService');
 local TweenService	= cloneref(game:GetService'TweenService');
