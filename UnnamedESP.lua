@@ -2,11 +2,10 @@ assert(Drawing, 'exploit not supported')
 
 if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially supports Synapse and Protosmasher! If you\'re an exploit developer and have added drawing API to your exploit, try setting syn as true then checking if that works, otherwise, DM me on discord @ cppbook.org#1968 or add an issue to the Unnamed ESP Github Repository and I\'ll see it through email!' end
 
-local UserInputService	= game:GetService'UserInputService';
-local HttpService	= game:GetService'HttpService';
-local GUIService	= game:GetService'GuiService';
-local TweenService	= game:GetService'TweenService';
-local RunService	= game:GetService'RunService';
+local UserInputService	= cloneref(game:GetService'UserInputService');
+local HttpService	= cloneref(game:GetService'HttpService');
+local TweenService	= cloneref(game:GetService'TweenService');
+local RunService	= cloneref(game:GetService'RunService');
 local Players		= game:GetService'Players';
 local LocalPlayer	= Players.LocalPlayer;
 local Camera		= workspace.CurrentCamera;
@@ -2028,14 +2027,12 @@ CameraCon();
 
 local function ToggleMenu()
 	if Options.MenuOpen.Value then
-		-- GUIService:SetMenuIsOpen(true);
 		GetTableData(shared.MenuDrawingData.Instances)(function(i, v)
 			if OldData[v] then
 				pcall(Set, v, 'Visible', true);
 			end
 		end)
 	else
-		-- GUIService:SetMenuIsOpen(false);
 		GetTableData(shared.MenuDrawingData.Instances)(function(i, v)
 			OldData[v] = v.Visible;
 			if v.Visible then
