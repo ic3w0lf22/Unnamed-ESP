@@ -1030,13 +1030,14 @@ function LineBox:Create(Properties)
 		if shared.am_ic3 then
 			Box['Square'].Visible = bool;
 			Box['OutlineSquare'].Visible = bool;
-		else
-			pcall(Set, Box['Quad'],				'Visible', bool);
+		elseif self.Quad then
+			self.Quad.Visible = false
+		elseif self.TopLeft and self.TopRight and self.BottomLeft and self.BottomRight then
+			self.TopLeft.Visible = bool
+			self.TopRight.Visible = bool
+			self.BottomLeft.Visible = bool
+			self.BottomRight.Visible = bool
 		end
-		-- pcall(Set, Box['TopLeft'],		'Visible', bool);
-		-- pcall(Set, Box['TopRight'],		'Visible', bool);
-		-- pcall(Set, Box['BottomLeft'],	'Visible', bool);
-		-- pcall(Set, Box['BottomRight'],	'Visible', bool);
 	end
 	function Box:Remove()
 		self:SetVisible(false);
