@@ -4,92 +4,67 @@ if not syn and not PROTOSMASHER_LOADED then print'Unnamed ESP only officially su
 
 if not cloneref then cloneref = function(o) return o end end
 
-local UserInputService	= cloneref(game:GetService'UserInputService');
-local HttpService	= cloneref(game:GetService'HttpService');
-local TweenService	= cloneref(game:GetService'TweenService');
-local RunService	= cloneref(game:GetService'RunService');
-local Players		= game:GetService'Players';
-local LocalPlayer	= Players.LocalPlayer;
-local Camera		= workspace.CurrentCamera;
-local Mouse		= LocalPlayer:GetMouse();
-local V2New		= Vector2.new;
-local V3New		= Vector3.new;
-local WTVP		= Camera.WorldToViewportPoint;
-local WorldToViewport	= function(...) return WTVP(Camera, ...) end;
-local Menu		= {};
-local MouseHeld		= false;
-local LastRefresh	= 0;
-local OptionsFile	= 'IC3_ESP_SETTINGS.dat';
-local Binding		= false;
-local BindedKey		= nil;
-local OIndex		= 0;
-local LineBox		= {};
-local UIButtons		= {};
-local Sliders		= {};
-local ColorPicker	= { Loading = false; LastGenerated = 0 };
-local Dragging		= false;
-local DraggingUI	= false;
-local Rainbow		= false;
-local DragOffset	= V2New();
-local DraggingWhat	= nil;
-local OldData		= {};
-local IgnoreList	= {};
-local EnemyColor	= Color3.new(1, 0, 0);
-local TeamColor		= Color3.new(0, 1, 0);
-local MenuLoaded	= false;
-local ErrorLogging	= false;
-local TracerPosition	= V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135);
-local DragTracerPosition= false;
-local SubMenu 		= {};
-local IsSynapse 	= syn and not PROTOSMASHER_LOADED;
-local Connections 	= { Active = {} };
-local Signal 		= {}; Signal.__index = Signal;
-local GetCharacter;
-local CurrentColorPicker;
-local Spectating;
+local UserInputService = cloneref(game:GetService'UserInputService')
+local HttpService = cloneref(game:GetService'HttpService')
+local TweenService = cloneref(game:GetService'TweenService')
+local RunService = cloneref(game:GetService'RunService')
+local Players = game:GetService'Players'
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+local V2New = Vector2.new
+local V3New = Vector3.new
+local WTVP = Camera.WorldToViewportPoint
+local WorldToViewport = function(...) return WTVP(Camera, ...) end
+local Menu = {}
+local MouseHeld = false
+local LastRefresh = 0
+local OptionsFile = 'IC3_ESP_SETTINGS.dat'
+local Binding = false
+local BindedKey = nil
+local OIndex = 0
+local LineBox = {}
+local UIButtons = {}
+local Sliders = {}
+local ColorPicker = { Loading = false, LastGenerated = 0 }
+local Dragging = false
+local DraggingUI = false
+local Rainbow = false
+local DragOffset = V2New()
+local DraggingWhat = nil
+local OldData = {}
+local IgnoreList = {}
+local EnemyColor = Color3.new(1, 0, 0)
+local TeamColor = Color3.new(0, 1, 0)
+local MenuLoaded = false
+local ErrorLogging = false
+local TracerPosition = V2New(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y - 135)
+local DragTracerPosition = false
+local SubMenu = {}
+local IsSynapse = syn and not PROTOSMASHER_LOADED
+local Connections = { Active = {} }
+local Signal = {} Signal.__index = Signal
+local GetCharacter, CurrentColorPicker, Spectating
 
-local Executor = (identifyexecutor or (function() return '' end))()
-local SupportedExploits = { 'Synapse X', 'ScriptWare', 'Krnl', 'OxygenU', 'Temple' }
-local QUAD_SUPPORTED_EXPLOIT = table.find(SupportedExploits, Executor) ~= nil
+local QUAD_SUPPORTED_EXPLOIT = pcall(function() Drawing.new('Quad'):Remove() end)
 
--- if not PROTOSMASHER_LOADED then Drawing.UseCompatTransparency = true; end -- For Elysian
+shared.MenuDrawingData = shared.MenuDrawingData or { Instances = {} }
+shared.InstanceData = shared.InstanceData or {}
+shared.RSName = shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false))
 
-shared.MenuDrawingData	= shared.MenuDrawingData or { Instances = {} };
-shared.InstanceData	= shared.InstanceData or {};
-shared.RSName		= shared.RSName or ('UnnamedESP_by_ic3-' .. HttpService:GenerateGUID(false));
+local GetDataName = shared.RSName .. '-GetData'
+local UpdateName = shared.RSName .. '-Update'
 
-local GetDataName	= shared.RSName .. '-GetData';
-local UpdateName	= shared.RSName .. '-Update';
-
-local Debounce		= setmetatable({}, {
+local Debounce = setmetatable({}, {
 	__index = function(t, i)
 		return rawget(t, i) or false
-	end;
-});
+	end
+})
 
 if shared.UESP_InputChangedCon then shared.UESP_InputChangedCon:Disconnect() end
 if shared.UESP_InputBeganCon then shared.UESP_InputBeganCon:Disconnect() end
 if shared.UESP_InputEndedCon then shared.UESP_InputEndedCon:Disconnect() end
 if shared.CurrentColorPicker then shared.CurrentColorPicker:Dispose() end
-
-local RealPrint, LastPrintTick = print, 0;
-local LatestPrints = setmetatable({}, { __index = function(t, i) return rawget(t, i) or 0 end });
-
-local function print(...)
-	local Content = unpack{...};
-	local print = RealPrint;
-
-	if tick() - LatestPrints[Content] > 5 then
-		LatestPrints[Content] = tick();
-		print(Content);
-	end
-end
-
-local function FromHex(HEX)
-	HEX = HEX:gsub('#', '');
-	
-	return Color3.fromRGB(tonumber('0x' .. HEX:sub(1, 2)), tonumber('0x' .. HEX:sub(3, 4)), tonumber('0x' .. HEX:sub(5, 6)));
-end
 
 local function IsStringEmpty(String)
 	if type(String) == 'string' then
@@ -99,9 +74,7 @@ local function IsStringEmpty(String)
 	return false;
 end
 
-local function Set(t, i, v)
-	t[i] = v;
-end
+local function Set(t, i, v) t[i] = v end
 
 local Teams = {};
 local CustomTeams = { -- Games that don't use roblox's team system
@@ -637,13 +610,14 @@ function CalculateValue(Min, Max, Percent)
 end
 
 function NewDrawing(InstanceName)
-	local Instance = Drawing.new(InstanceName);
-	-- pcall(Set, Instance, 'OutlineOpacity', 0.8)
+	local Instance = Drawing.new(InstanceName)
+
 	return (function(Properties)
 		for i, v in pairs(Properties) do
-			pcall(Set, Instance, i, v);
+			pcall(Set, Instance, i, v)
 		end
-		return Instance;
+
+		return Instance
 	end)
 end
 
@@ -1015,7 +989,6 @@ function LineBox:Create(Properties)
 			else
 				Box['BottomRight'].Visible	= false;
 			end
-			-- ## END UGLY CODE
 			if Properties and typeof(Properties) == 'table' then
 				GetTableData(Properties)(function(i, v)
 					pcall(Set, Box['TopLeft'],		i, v);
@@ -1024,6 +997,7 @@ function LineBox:Create(Properties)
 					pcall(Set, Box['BottomRight'],	i, v);
 				end)
 			end
+			-- ## END UGLY CODE
 		end
 	end
 	function Box:SetVisible(bool)
@@ -1040,35 +1014,37 @@ function LineBox:Create(Properties)
 		end
 	end
 	function Box:Remove()
-		self:SetVisible(false);
+		self:SetVisible(false)
+
 		if shared.am_ic3 then
-			Box['Square']:Remove();
-			Box['OutlineSquare']:Remove();
-		else
-			Box['Quad']:Remove();
+			Box['Square']:Remove()
+			Box['OutlineSquare']:Remove()
+		elseif self.Quad then
+			Box['Quad']:Remove()
+		elseif self.TopLeft and self.TopRight and self.BottomLeft and self.BottomRight then
+			self.TopLeft:Remove()
+			self.TopRight:Remove()
+			self.BottomLeft:Remove()
+			self.BottomRight:Remove()
 		end
-		-- Box['TopLeft']:Remove();
-		-- Box['TopRight']:Remove();
-		-- Box['BottomLeft']:Remove();
-		-- Box['BottomRight']:Remove();
 	end
 
 	return Box;
 end
 
 local Colors = {
-	White = FromHex'ffffff';
+	White = Color3.fromHex'ffffff',
 	Primary = {
-		Main	= FromHex'424242';
-		Light	= FromHex'6d6d6d';
-		Dark	= FromHex'1b1b1b';
-	};
+		Main	= Color3.fromHex'424242',
+		Light	= Color3.fromHex'6d6d6d',
+		Dark	= Color3.fromHex'1b1b1b'
+	},
 	Secondary = {
-		Main	= FromHex'e0e0e0';
-		Light	= FromHex'ffffff';
-		Dark	= FromHex'aeaeae';
-	};
-};
+		Main	= Color3.fromHex'e0e0e0',
+		Light	= Color3.fromHex'ffffff',
+		Dark	= Color3.fromHex'aeaeae'
+	}
+}
 
 function Connections:Listen(Connection, Function)
     local NewConnection = Connection:Connect(Function);
@@ -1131,12 +1107,10 @@ local ImageCache = {};
 local function SetImage(Drawing, Url)
 	local Data = IsSynapse and game:HttpGet(Url) or Url;
 
-	print(Drawing, IsSynapse)
-
 	Drawing[IsSynapse and 'Data' or 'Uri'] = ImageCache[Url] or Data;
 	ImageCache[Url] = Data;
     
-    if not IsSynapse then repeat wait() until Drawing.Loaded; end
+	if not IsSynapse then repeat wait() until Drawing.Loaded; end
 end
 
 -- oh god unnamed esp needs an entire rewrite, someone make a better one pls im too lazy
@@ -1228,24 +1202,24 @@ local function CreateDrawingsTable()
     return setmetatable(Drawings, Metatable);
 end
 
-local Images = {};
+local Images = {}
 
 spawn(function()
-	Images.Ring = 'https://i.imgur.com/q4qx26f.png';
-	Images.Overlay = 'https://i.imgur.com/gOCxbsR.png';
+	Images.Ring = 'https://i.imgur.com/q4qx26f.png'
+	Images.Overlay = 'https://i.imgur.com/gOCxbsR.png'
 end)
 
 function ColorPicker.new(Position, Size, Color)
 	ColorPicker.LastGenerated = tick();
 	ColorPicker.Loading = true;
 
-    local Picker = { Color = Color or Color3.new(1, 1, 1); HSV = { H = 0, S = 1, V = 1 } };
+    local self = { Color = Color or Color3.new(1, 1, 1); HSV = { H = 0, S = 1, V = 1 } };
     local Drawings = CreateDrawingsTable();
     local Position = Position or V2New();
     local Size = Size or 150;
     local Padding = { 10, 10, 10, 10 };
     
-    Picker.ColorChanged = Signal.new();
+    self.ColorChanged = Signal.new();
 
     local Background = Drawings['Square-Background'] {
         Color = Color3.fromRGB(33, 33, 33);
@@ -1307,7 +1281,7 @@ function ColorPicker.new(Position, Size, Color)
         Position = CursorOutline.Position;
     };
     
-    function Picker:UpdatePosition(Input)
+    function self:UpdatePosition(Input)
         local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
 
         if self.MouseHeld then
@@ -1345,7 +1319,7 @@ function ColorPicker.new(Position, Size, Color)
         end
     end
 
-    function Picker:HandleInput(Input, P, Type)
+    function self:HandleInput(Input, P, Type)
         if Type == 'Began' then
             if Input.UserInputType.Name == 'MouseButton1' then
                 local Main = self.Drawings['Image-Main'] ();
@@ -1375,7 +1349,7 @@ function ColorPicker.new(Position, Size, Color)
         end
 	end
 	
-	function Picker:Dispose()
+	function self:Dispose()
 		self.Drawings(false);
 		self.UpdatePosition = nil;
 		self.HandleInput = nil;
@@ -1383,12 +1357,12 @@ function ColorPicker.new(Position, Size, Color)
 	end
 
 	Connections:Listen(UserInputService.InputBegan, function(Input, Process)
-		Picker:HandleInput(Input, Process, 'Began');
+		self:HandleInput(Input, Process, 'Began');
 	end);
 	Connections:Listen(UserInputService.InputChanged, function(Input, Process)
 		if Input.UserInputType.Name == 'MouseMovement' then
 			local MousePosition = V2New(Input.Position.X, Input.Position.Y + 33);
-			local Cursor = Picker.Drawings['Triangle-Cursor'] {
+			local Cursor = self.Drawings['Triangle-Cursor'] {
 				Filled = true;
 				Color = Color3.new(0.9, 0.9, 0.9);
 				PointA = MousePosition + V2New(0, 0);
@@ -1397,20 +1371,21 @@ function ColorPicker.new(Position, Size, Color)
 				Thickness = 0;
 			};
 		end
-		Picker:HandleInput(Input, Process, 'Changed');
+		self:HandleInput(Input, Process, 'Changed');
 	end);
 	Connections:Listen(UserInputService.InputEnded, function(Input, Process)
-		Picker:HandleInput(Input, Process, 'Ended');
+		self:HandleInput(Input, Process, 'Ended');
 		
 		if Input.UserInputType.Name == 'MouseButton1' then
-			Picker.MouseHeld = false;
+			self.MouseHeld = false
 		end
-	end);
+	end)
 
-	ColorPicker.Loading = false;
+	ColorPicker.Loading = false
 
-    Picker.Drawings = Drawings;
-    return Picker;
+    self.Drawings = Drawings
+
+    return self
 end
 
 function SubMenu:Show(Position, Title, Options)
@@ -1625,7 +1600,7 @@ function CreateMenu(NewPosition) -- Create Menu
 		Position	= BasePosition + V2New(0, 60);
 		Filled		= true;
 		Color		= Colors.Secondary.Main;
-		Transparency= .5;
+		Transparency= .35;
 		Visible		= true;
 	});
 
