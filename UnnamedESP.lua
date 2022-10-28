@@ -173,70 +173,46 @@ local GetAliveState;
 local CustomRootPartName;
 
 local Modules = {
-	[292439477] = {
-		CustomESP = function()
-			if type(shared.PF_Replication) ~= 'table' then
-				local lastScan = shared.pfReplicationScan
+	[292439477] = { -- rawget spam for no detec
+		CustomCharacter = function(Player)
+			if not shared.getEntry then
+				local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache
+				local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module')
 
-				if (tick() - (lastScan or 0)) > 0.01 then
-					shared.pfReplicationScan = tick()
+				shared.getEntry = rawget(ReplicationInterface, 'getEntry')
+			else
+				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
 
-					local gc = getgc(true)
-					for i = 1, #gc do
-						local gcObject = gc[i];
-						if type(gcObject) == 'table' and type(rawget(gcObject, 'getbodyparts')) == 'function' then
-							shared.PF_Replication = gcObject;
-							break
-						end
-					end
+				if Entry then
+					local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then return end
+					local Character = rawget(TPO, '_characterHash') if not Character then return end
+					local Torso = rawget(Character, 'torso') if not Torso then return end
+					
+					return Torso.Parent
 				end
-
-				return
-			end
-
-			for Index, Player in pairs(Players:GetPlayers()) do
-				if Player == LocalPlayer then continue end
-
-				local Body = shared.PF_Replication.getbodyparts(Player);
-
-				if type(Body) == 'table' and typeof(rawget(Body, 'torso')) == 'Instance' then
-					Player.Character = Body.torso.Parent
-					continue
-				end
-
-				Player.Character = nil;
 			end
 		end,
 
 		GetHealth = function(Player)
-			if type(shared.pfHud) ~= 'table' then
-				return false
-			end
+			if shared.getEntry then
+				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
 
-			return shared.pfHud:getplayerhealth(Player)
+				if Entry then
+					local state = rawget(Entry, '_healthstate')
+
+					return rawget(state, 'health0')
+				end
+			end
 		end,
 
 		GetAliveState = function(Player)
-			if type(shared.pfHud) ~= 'table' then
-				local lastScan = shared.pfHudScan
+			if shared.getEntry then
+				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
 
-				if (tick() - (lastScan or 0)) > 0.1 then
-					shared.pfHudScan = tick()
-
-					local gc = getgc(true)
-					for i = 1, #gc do
-						local gcObject = gc[i];
-						if type(gcObject) == 'table' and type(rawget(gcObject, 'getplayerhealth')) == 'function' then
-							shared.pfHud = gcObject;
-							break
-						end
-					end
+				if Entry then
+					return rawget(Entry, '_alive')
 				end
-
-				return
 			end
-
-			return shared.pfHud:isplayeralive(Player)
 		end,
 
 		CustomRootPartName = 'Torso',
@@ -577,7 +553,7 @@ if Modules[game.PlaceId] ~= nil or Modules[game.GameId] ~= nil then
 end
 
 function GetCharacter(Player)
-	return Player.Character or (CustomCharacter and CustomCharacter(Player));
+	return CustomCharacter and CustomCharacter(Player) or Player.Character
 end
 
 function GetMouseLocation()
