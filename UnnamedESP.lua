@@ -176,8 +176,10 @@ local Modules = {
 	[292439477] = { -- rawget spam for no detec
 		CustomCharacter = function(Player)
 			if not shared.getEntry then
-				local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache
-				local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module')
+				if not getrenv().shared.require then return end
+				
+				local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache if not Cache then return end
+				local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module') if not ReplicationInterface then return end
 
 				shared.getEntry = rawget(ReplicationInterface, 'getEntry')
 			else
