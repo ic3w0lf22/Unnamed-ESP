@@ -9,4 +9,4 @@ Player ESP for Roblox, fully undetectable, uses built in drawing API if the expl
 # Supported Exploits
  * Synapse X
  * ~~ProtoSmasher~~
- * Elysian
+ * ~~Elysian~~
