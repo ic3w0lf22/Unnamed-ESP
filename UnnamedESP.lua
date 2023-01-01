@@ -173,47 +173,63 @@ local GetAliveState;
 local CustomRootPartName;
 
 local Modules = {
-	[292439477] = { -- rawget spam for no detec
-		CustomCharacter = function(Player)
-			if not shared.getEntry then
+	[292439477] = {
+		Initialize = function()
+			if not syn then return end -- only supports synapse cuz they got parallel lua support
+
+			local EventID, Event = syn.create_comm_channel()
+			Event:Connect(function(List)
+				PF_CharList = List
+			end)
+					
+			syn.run_on_actor(game:GetService'ReplicatedFirst'.lol, [[
+				local Event = syn.get_comm_channel(...)
+
 				if not getrenv().shared.require then return end
 				
+				local RunService = game:GetService'RunService'
 				local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache if not Cache then return end
 				local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module') if not ReplicationInterface then return end
+				local getEntry = rawget(ReplicationInterface, 'getEntry')
 
-				shared.getEntry = rawget(ReplicationInterface, 'getEntry')
-			else
-				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
+				if shared.UNPFHB then shared.UNPFHB:Disconnect() end
 
-				if Entry then
-					local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then return end
-					local Character = rawget(TPO, '_characterHash') if not Character then return end
-					local Torso = rawget(Character, 'torso') if not Torso then return end
+				shared.UNPFHB = RunService.Heartbeat:Connect(function()
+					local CharacterList = {}
 					
-					return Torso.Parent
-				end
+					for Player, Entry in pairs(debug.getupvalues(getEntry)[1]) do
+						local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then continue end
+						local Character = rawget(TPO, '_characterHash') if not Character then continue end
+						local Torso = rawget(Character, 'torso') if not Torso then continue end
+						local HealthState = rawget(Entry, '_healthstate')
+
+						CharacterList[Player.Name] = {
+							Character = Torso.Parent,
+							Health = HealthState and rawget(HealthState, 'health0') or 100,
+							Alive = rawget(Entry, '_alive')
+						}
+					end
+
+					Event:Fire(CharacterList)
+				end)
+			]], EventID)
+		end,
+
+		CustomCharacter = function(Player)
+			if PF_CharList and PF_CharList[Player.Name] then
+				return PF_CharList[Player.Name].Character
 			end
 		end,
 
 		GetHealth = function(Player)
-			if shared.getEntry then
-				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
-
-				if Entry then
-					local state = rawget(Entry, '_healthstate')
-
-					return rawget(state, 'health0')
-				end
+			if PF_CharList and PF_CharList[Player.Name] then
+				return PF_CharList[Player.Name].Health
 			end
 		end,
 
 		GetAliveState = function(Player)
-			if shared.getEntry then
-				local Entry = rawget(debug.getupvalues(shared.getEntry)[1], Player)
-
-				if Entry then
-					return rawget(Entry, '_alive')
-				end
+			if PF_CharList and PF_CharList[Player.Name] then
+				return PF_CharList[Player.Name].Alive
 			end
 		end,
 
@@ -546,6 +562,11 @@ local Modules = {
 
 if Modules[game.PlaceId] ~= nil or Modules[game.GameId] ~= nil then
 	local Module = Modules[game.PlaceId] or Modules[game.GameId]
+
+	if Module.Initialize then
+		Module.Initialize()
+	end
+
 	CustomPlayerTag = Module.CustomPlayerTag or nil
 	CustomESP = Module.CustomESP or nil
 	CustomCharacter = Module.CustomCharacter or nil
