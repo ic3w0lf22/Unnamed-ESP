@@ -181,38 +181,40 @@ local Modules = {
 			Event:Connect(function(List)
 				PF_CharList = List
 			end)
+			
+			for Index, Actor in pairs(getactors()) do
+				syn.run_on_actor(Actor, [[
+					local Event = syn.get_comm_channel(...)
+
+					if not getrenv().shared.require then return end
 					
-			syn.run_on_actor(game:GetService'ReplicatedFirst'.lol, [[
-				local Event = syn.get_comm_channel(...)
+					local RunService = game:GetService'RunService'
+					local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache if not Cache then return end
+					local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module') if not ReplicationInterface then return end
+					local getEntry = rawget(ReplicationInterface, 'getEntry')
 
-				if not getrenv().shared.require then return end
-				
-				local RunService = game:GetService'RunService'
-				local Cache = debug.getupvalues(getrenv().shared.require)[1]._cache if not Cache then return end
-				local ReplicationInterface = rawget(rawget(Cache, 'ReplicationInterface'), 'module') if not ReplicationInterface then return end
-				local getEntry = rawget(ReplicationInterface, 'getEntry')
+					if shared.UNPFHB then shared.UNPFHB:Disconnect() end
 
-				if shared.UNPFHB then shared.UNPFHB:Disconnect() end
+					shared.UNPFHB = RunService.Heartbeat:Connect(function()
+						local CharacterList = {}
+						
+						for Player, Entry in pairs(debug.getupvalues(getEntry)[1]) do
+							local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then continue end
+							local Character = rawget(TPO, '_characterHash') if not Character then continue end
+							local Torso = rawget(Character, 'torso') if not Torso then continue end
+							local HealthState = rawget(Entry, '_healthstate')
 
-				shared.UNPFHB = RunService.Heartbeat:Connect(function()
-					local CharacterList = {}
-					
-					for Player, Entry in pairs(debug.getupvalues(getEntry)[1]) do
-						local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then continue end
-						local Character = rawget(TPO, '_characterHash') if not Character then continue end
-						local Torso = rawget(Character, 'torso') if not Torso then continue end
-						local HealthState = rawget(Entry, '_healthstate')
+							CharacterList[Player.Name] = {
+								Character = Torso.Parent,
+								Health = HealthState and rawget(HealthState, 'health0') or 100,
+								Alive = rawget(Entry, '_alive')
+							}
+						end
 
-						CharacterList[Player.Name] = {
-							Character = Torso.Parent,
-							Health = HealthState and rawget(HealthState, 'health0') or 100,
-							Alive = rawget(Entry, '_alive')
-						}
-					end
-
-					Event:Fire(CharacterList)
-				end)
-			]], EventID)
+						Event:Fire(CharacterList)
+					end)
+				]], EventID)
+			end
 		end,
 
 		CustomCharacter = function(Player)
