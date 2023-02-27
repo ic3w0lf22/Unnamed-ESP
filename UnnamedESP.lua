@@ -1953,7 +1953,7 @@ shared.UESP_InputEndedCon = UserInputService.InputEnded:Connect(function(input)
 			Options.MenuOpen();
 		elseif input.KeyCode == Options.ToggleKey.Value then
 			Options.Enabled();
-		elseif input.KeyCode.Name == 'F1' and UserInputService:IsMouseButtonPressed(1) and shared.am_ic3 then -- hehe hiden spectate feature cuz why not
+		elseif input.KeyCode.Name == 'F1' and UserInputService:IsMouseButtonPressed(1) then -- and shared.am_ic3 then -- hehe hiden spectate feature cuz why not
 			local HD, LPlayer, LCharacter = 0.95;
 
 			for i, Player in pairs(Players:GetPlayers()) do
