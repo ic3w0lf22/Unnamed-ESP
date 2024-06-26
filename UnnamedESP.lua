@@ -175,16 +175,17 @@ local CustomRootPartName;
 local Modules = {
 	[292439477] = {
 		Initialize = function()
-			if not syn then return end -- only supports synapse cuz they got parallel lua support
+			if not create_comm_channel or not get_comm_channel then return end
 
-			local EventID, Event = syn.create_comm_channel()
-			Event:Connect(function(List)
+			local run_on_actor = runonactor or run_on_actor
+			local EventID, Event = create_comm_channel()
+			Event.Event:Connect(function(List)
 				PF_CharList = List
 			end)
 			
 			for Index, Actor in pairs(getactors()) do
-				syn.run_on_actor(Actor, [[
-					local Event = syn.get_comm_channel(...)
+				run_on_actor(Actor, [[
+					local Event = get_comm_channel(...)
 
 					if not getrenv().shared.require then return end
 					
@@ -201,11 +202,12 @@ local Modules = {
 						for Player, Entry in pairs(debug.getupvalues(getEntry)[1]) do
 							local TPO = rawget(Entry, '_thirdPersonObject') if not TPO then continue end
 							local Character = rawget(TPO, '_characterHash') if not Character then continue end
-							local Torso = rawget(Character, 'torso') if not Torso then continue end
+							local Torso = rawget(Character, 'Torso') if not Torso then continue end
 							local HealthState = rawget(Entry, '_healthstate')
 
 							CharacterList[Player.Name] = {
-								Character = Torso.Parent,
+								Head = Character.Head,
+								Torso = Character.Torso,
 								Health = HealthState and rawget(HealthState, 'health0') or 100,
 								Alive = rawget(Entry, '_alive')
 							}
@@ -218,8 +220,23 @@ local Modules = {
 		end,
 
 		CustomCharacter = function(Player)
+			if not shared.PF_CharMT then
+				shared.PF_CharMT = {}
+				shared.PF_CharMT.__index = shared.PF_CharMT
+
+				function shared.PF_CharMT:FindFirstChild(Name)
+					return rawget(self, Name)
+				end
+
+				function shared.PF_CharMT:FindFirstChildOfClass() end
+			end
+
 			if PF_CharList and PF_CharList[Player.Name] then
-				return PF_CharList[Player.Name].Character
+				local Character = PF_CharList[Player.Name]
+				
+				setmetatable(Character, shared.PF_CharMT)
+				
+				return Character
 			end
 		end,
 
@@ -2314,6 +2331,7 @@ local function UpdatePlayerData()
 				local HumanoidRootPart = Character:FindFirstChild(CustomRootPartName or 'HumanoidRootPart')
 
 				local Dead = (Humanoid and Humanoid:GetState().Name == 'Dead')
+				
 				if type(GetAliveState) == 'function' then
 					Dead = (not GetAliveState(v, Character))
 				end
